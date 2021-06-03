@@ -1,0 +1,375 @@
+//
+// Created by spak on 5/28/21.
+//
+
+#ifndef PICOSKATE_NEOPIXEL_STRIP_HPP
+#define PICOSKATE_NEOPIXEL_STRIP_HPP
+
+#include <vector>
+#include <limits>
+#include <neopixel_rmt.hpp>
+
+namespace neo {
+
+    template<class OutputIt>
+    OutputIt populate(OutputIt it, std::uint8_t b, rmt_item32_s zero, rmt_item32_s one);
+
+    template<class OutputIt, class T, class = std::enable_if_t<not std::is_polymorphic_v<T>>>
+    OutputIt populate(OutputIt it, T const &t, rmt_item32_s zero, rmt_item32_s one);
+
+    template<class Pix>
+    class ref;
+
+    template<class Pix>
+    class cref;
+
+
+    template<class Pix>
+    class strip {
+        rmt_item32_s _zero;
+        rmt_item32_s _one;
+        std::vector<Pix> _pixels;
+        std::vector<rmt_item32_s> _rmt_buffer;
+    public:
+        explicit strip(std::pair<rmt_item32_s, rmt_item32_s> zero_one);
+
+        strip(rmt_manager const &manager, controller chip);
+
+        esp_err_t transmit(rmt_channel_t channel, bool wait_tx_done) const;
+
+        template<class Neopix, class CRTPIt>
+        class iterator_base;
+
+        class const_iterator;
+
+        class iterator;
+
+        [[nodiscard]] inline rmt_item32_s zero() const;
+
+        [[nodiscard]] inline rmt_item32_s one() const;
+
+        [[nodiscard]] inline std::size_t size() const;
+
+        [[nodiscard]] inline bool empty() const;
+
+        void clear();
+
+        void resize(std::size_t new_size, Pix pix);
+
+        [[nodiscard]] inline ref<Pix> operator[](std::size_t i);
+
+        [[nodiscard]] inline cref<Pix> operator[](std::size_t i) const;
+
+        [[nodiscard]] inline const_iterator begin() const;
+
+        [[nodiscard]] inline const_iterator cbegin() const;
+
+        [[nodiscard]] inline const_iterator end() const;
+
+        [[nodiscard]] inline const_iterator cend() const;
+
+        [[nodiscard]] inline iterator begin();
+
+        [[nodiscard]] inline iterator end();
+    };
+
+
+    template<class Pix>
+    template<class Neopix, class CRTPIt>
+    class strip<Pix>::iterator_base {
+    protected:
+        Neopix *_neopix = nullptr;
+        std::size_t _i = std::numeric_limits<std::size_t>::max();
+    public:
+        iterator_base() = default;
+
+        iterator_base(Neopix &neopix, std::size_t i) : _neopix{&neopix}, _i{i} {}
+
+        [[nodiscard]] inline decltype(auto) operator*() const;
+
+        inline CRTPIt &operator++();
+
+        inline const CRTPIt operator++(int);
+
+        inline CRTPIt &operator--();
+
+        inline const CRTPIt operator--(int);
+
+        [[nodiscard]] inline bool operator==(CRTPIt const &other) const;
+
+        [[nodiscard]] inline bool operator!=(CRTPIt const &other) const;
+
+        inline CRTPIt &operator+=(std::size_t n);
+
+        inline CRTPIt &operator-=(std::size_t n);
+    };
+
+
+    template<class Pix>
+    class strip<Pix>::const_iterator : public iterator_base<strip const, const_iterator> {
+    public:
+        using iterator_base<strip const, const_iterator>::iterator_base;
+    };
+
+
+    template<class Pix>
+    class strip<Pix>::iterator : public iterator_base<strip, iterator> {
+    protected:
+        using iterator_base<strip const, const_iterator>::_neopix;
+        using iterator_base<strip const, const_iterator>::_i;
+    public:
+        using iterator_base<strip, iterator>::iterator_base;
+
+        inline operator const_iterator() const;
+    };
+
+    template<class Pix>
+    class cref {
+    protected:
+        Pix const &_cref;
+    public:
+        explicit cref(Pix const &cref);
+
+        [[nodiscard]] inline operator Pix() const;
+    };
+
+
+    template<class Pix>
+    class ref : public cref<Pix> {
+        strip<Pix> const &_neopixel;
+        std::vector<rmt_item32_s>::iterator _repr_it;
+    public:
+        explicit ref(Pix &ref, std::vector<rmt_item32_s>::iterator repr_it, strip<Pix> const &neo);
+
+        using cref<Pix>::operator Pix;
+
+        ref &operator=(Pix v);
+    };
+
+}
+
+namespace neo {
+
+    template<class Pix>
+    strip<Pix>::strip(rmt_manager const &manager, controller chip) : _zero{}, _one{} {
+        auto[zero, one] = make_zero_one(manager, chip);
+        _zero = zero;
+        _one = one;
+    }
+
+    template<class Pix>
+    strip<Pix>::strip(std::pair<rmt_item32_s, rmt_item32_s> zero_one) :
+            _zero{zero_one.first},
+            _one{zero_one.second} {}
+
+    template<class Pix>
+    std::size_t strip<Pix>::size() const {
+        return _pixels.size();
+    }
+
+    template<class Pix>
+    void strip<Pix>::resize(std::size_t new_size, Pix pix) {
+        const auto old_size = size();
+        _pixels.resize(new_size, pix);
+        _rmt_buffer.resize(new_size * 8 * sizeof(Pix), zero());
+        if (new_size > old_size) {
+            for (std::size_t i = old_size; i < new_size; ++i) {
+                (*this)[i] = pix;
+            }
+        }
+    }
+
+    template<class Pix>
+    void strip<Pix>::clear() {
+        _pixels.clear();
+        _rmt_buffer.clear();
+    }
+
+    template<class Pix>
+    template<class Neopix, class CRTPIt>
+    decltype(auto) strip<Pix>::iterator_base<Neopix, CRTPIt>::operator*() const {
+        return (*_neopix)[_i];
+    }
+
+
+    template<class Pix>
+    template<class Neopix, class CRTPIt>
+    CRTPIt &strip<Pix>::iterator_base<Neopix, CRTPIt>::operator++() {
+        ++_i;
+        return *this;
+    }
+
+    template<class Pix>
+    template<class Neopix, class CRTPIt>
+    const CRTPIt strip<Pix>::iterator_base<Neopix, CRTPIt>::operator++(int) {
+        iterator_base<Neopix, CRTPIt> copy = *this;
+        ++(*this);
+        return copy;
+    }
+
+    template<class Pix>
+    template<class Neopix, class CRTPIt>
+    CRTPIt &strip<Pix>::iterator_base<Neopix, CRTPIt>::operator--() {
+        --_i;
+        return *this;
+    }
+
+    template<class Pix>
+    template<class Neopix, class CRTPIt>
+    const CRTPIt strip<Pix>::iterator_base<Neopix, CRTPIt>::operator--(int) {
+        iterator_base<Neopix, CRTPIt> copy = *this;
+        --(*this);
+        return copy;
+    }
+
+
+    template<class Pix>
+    template<class Neopix, class CRTPIt>
+    bool strip<Pix>::iterator_base<Neopix, CRTPIt>::operator==(CRTPIt const &other) const {
+        if (_neopix == other._neopix) {
+            if (_neopix != nullptr) {
+                return _i == other._i;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    template<class Pix>
+    template<class Neopix, class CRTPIt>
+    bool strip<Pix>::iterator_base<Neopix, CRTPIt>::operator!=(CRTPIt const &other) const {
+        return not operator==(other);
+    }
+
+
+    template<class Pix>
+    template<class Neopix, class CRTPIt>
+    CRTPIt &strip<Pix>::iterator_base<Neopix, CRTPIt>::operator+=(std::size_t n) {
+        _i += n;
+        return *this;
+    }
+
+
+    template<class Pix>
+    template<class Neopix, class CRTPIt>
+    CRTPIt &strip<Pix>::iterator_base<Neopix, CRTPIt>::operator-=(std::size_t n) {
+        _i -= n;
+        return *this;
+    }
+
+    template<class Pix>
+    strip<Pix>::iterator::operator const_iterator() const {
+        if (_neopix == nullptr) {
+            return const_iterator{};
+        }
+        return const_iterator{*_neopix, _i};
+    }
+
+    template<class Pix>
+    typename strip<Pix>::const_iterator strip<Pix>::begin() const {
+        return {*this, 0};
+    }
+
+    template<class Pix>
+    typename strip<Pix>::const_iterator strip<Pix>::cbegin() const {
+        return {*this, 0};
+    }
+
+
+    template<class Pix>
+    typename strip<Pix>::const_iterator strip<Pix>::end() const {
+        return {*this, size() - 1};
+    }
+
+
+    template<class Pix>
+    typename strip<Pix>::const_iterator strip<Pix>::cend() const {
+        return {*this, size() - 1};
+    }
+
+
+    template<class Pix>
+    typename strip<Pix>::iterator strip<Pix>::begin() {
+        return {*this, 0};
+    }
+
+
+    template<class Pix>
+    typename strip<Pix>::iterator strip<Pix>::end() {
+        return {*this, size() - 1};
+    }
+
+    template<class Pix>
+    ref<Pix> strip<Pix>::operator[](std::size_t i) {
+        using diff_t = typename decltype(_rmt_buffer)::difference_type;
+        return ref{_pixels.at(i), std::begin(_rmt_buffer) + diff_t(i * 8 * sizeof(Pix)), *this};
+    }
+
+    template<class Pix>
+    cref<Pix> strip<Pix>::operator[](std::size_t i) const {
+        return cref{_pixels.at(i)};
+    }
+
+    template<class Pix>
+    bool strip<Pix>::empty() const {
+        return _pixels.empty();
+    }
+
+    template<class Pix>
+    cref<Pix>::operator Pix() const {
+        return _cref;
+    }
+
+    template<class Pix>
+    cref<Pix>::cref(Pix const &cref) : _cref{cref} {}
+
+    template<class Pix>
+    ref<Pix>::ref(Pix &ref, std::vector<rmt_item32_s>::iterator repr_it, strip<Pix> const &neo) :
+            cref<Pix>{ref},
+            _neopixel{neo},
+            _repr_it{repr_it} {}
+
+    template<class Pix>
+    ref<Pix> &ref<Pix>::operator=(Pix v) {
+        Pix &pix = const_cast<Pix &>(cref<Pix>::_cref);
+        pix = v;
+        // Make sure to copy the byte representation
+        populate(_repr_it, pix, _neopixel.zero(), _neopixel.one());
+        return *this;
+    }
+
+    template<class OutputIt>
+    OutputIt populate(OutputIt it, std::uint8_t b, rmt_item32_s zero, rmt_item32_s one) {
+        for (std::uint8_t mask = 1 << 7; mask != 0; mask >>= 1) {
+            *(it++) = (b & mask) != 0 ? one : zero;
+        }
+        return it;
+    }
+
+    template<class OutputIt, class T, class>
+    OutputIt populate(OutputIt it, T const &t, rmt_item32_s zero, rmt_item32_s one) {
+        auto const *byte_rep = reinterpret_cast<std::uint8_t const *>(&t);
+        for (std::size_t i = 0; i < sizeof(T); ++i, ++byte_rep) {
+            it = populate(it, *byte_rep, zero, one);
+        }
+        return it;
+    }
+
+
+    template<class Pix>
+    rmt_item32_s strip<Pix>::zero() const {
+        return _zero;
+    }
+
+    template<class Pix>
+    rmt_item32_s strip<Pix>::one() const {
+        return _one;
+    }
+
+    template<class Pix>
+    esp_err_t strip<Pix>::transmit(rmt_channel_t channel, bool wait_tx_done) const {
+        return rmt_write_items(channel, _rmt_buffer.data(), _rmt_buffer.size(), wait_tx_done);
+    }
+}
+
+#endif //PICOSKATE_NEOPIXEL_STRIP_HPP
