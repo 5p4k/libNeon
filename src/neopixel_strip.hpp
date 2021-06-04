@@ -17,20 +17,23 @@ namespace neo {
     template<class OutputIt, class T, class = std::enable_if_t<not std::is_polymorphic_v<T>>>
     OutputIt populate(OutputIt it, T const &t, rmt_item32_s zero, rmt_item32_s one);
 
-    template<class Pix>
+    template<class Led>
     class ref;
 
-    template<class Pix>
+    template<class Led>
     class cref;
 
 
-    template<class Pix>
+    template<class Led>
     class strip {
         rmt_item32_s _zero;
         rmt_item32_s _one;
-        std::vector<Pix> _pixels;
+        std::vector<Led> _pixels;
         std::vector<rmt_item32_s> _rmt_buffer;
     public:
+
+        static_assert(std::has_unique_object_representations_v<Led>, "The Led class will be transmitted directly");
+
         explicit strip(std::pair<rmt_item32_s, rmt_item32_s> zero_one);
 
         strip(rmt_manager const &manager, controller chip);
@@ -54,11 +57,11 @@ namespace neo {
 
         void clear();
 
-        void resize(std::size_t new_size, Pix pix);
+        void resize(std::size_t new_size, Led pix);
 
-        [[nodiscard]] inline ref<Pix> operator[](std::size_t i);
+        [[nodiscard]] inline ref<Led> operator[](std::size_t i);
 
-        [[nodiscard]] inline cref<Pix> operator[](std::size_t i) const;
+        [[nodiscard]] inline cref<Led> operator[](std::size_t i) const;
 
         [[nodiscard]] inline const_iterator begin() const;
 
@@ -74,9 +77,9 @@ namespace neo {
     };
 
 
-    template<class Pix>
+    template<class Led>
     template<class Neopix, class CRTPIt>
-    class strip<Pix>::iterator_base {
+    class strip<Led>::iterator_base {
     protected:
         Neopix *_neopix = nullptr;
         std::size_t _i = std::numeric_limits<std::size_t>::max();
@@ -105,15 +108,15 @@ namespace neo {
     };
 
 
-    template<class Pix>
-    class strip<Pix>::const_iterator : public iterator_base<strip const, const_iterator> {
+    template<class Led>
+    class strip<Led>::const_iterator : public iterator_base<strip const, const_iterator> {
     public:
         using iterator_base<strip const, const_iterator>::iterator_base;
     };
 
 
-    template<class Pix>
-    class strip<Pix>::iterator : public iterator_base<strip, iterator> {
+    template<class Led>
+    class strip<Led>::iterator : public iterator_base<strip, iterator> {
     protected:
         using iterator_base<strip const, const_iterator>::_neopix;
         using iterator_base<strip const, const_iterator>::_i;
@@ -123,55 +126,55 @@ namespace neo {
         inline operator const_iterator() const;
     };
 
-    template<class Pix>
+    template<class Led>
     class cref {
     protected:
-        Pix const &_cref;
+        Led const &_cref;
     public:
-        explicit cref(Pix const &cref);
+        explicit cref(Led const &cref);
 
-        [[nodiscard]] inline operator Pix() const;
+        [[nodiscard]] inline operator Led() const;
     };
 
 
-    template<class Pix>
-    class ref : public cref<Pix> {
-        strip<Pix> const &_neopixel;
+    template<class Led>
+    class ref : public cref<Led> {
+        strip<Led> const &_neopixel;
         std::vector<rmt_item32_s>::iterator _repr_it;
     public:
-        explicit ref(Pix &ref, std::vector<rmt_item32_s>::iterator repr_it, strip<Pix> const &neo);
+        explicit ref(Led &ref, std::vector<rmt_item32_s>::iterator repr_it, strip<Led> const &neo);
 
-        using cref<Pix>::operator Pix;
+        using cref<Led>::operator Led;
 
-        ref &operator=(Pix v);
+        ref &operator=(Led v);
     };
 
 }
 
 namespace neo {
 
-    template<class Pix>
-    strip<Pix>::strip(rmt_manager const &manager, controller chip) : _zero{}, _one{} {
+    template<class Led>
+    strip<Led>::strip(rmt_manager const &manager, controller chip) : _zero{}, _one{} {
         auto[zero, one] = make_zero_one(manager, chip);
         _zero = zero;
         _one = one;
     }
 
-    template<class Pix>
-    strip<Pix>::strip(std::pair<rmt_item32_s, rmt_item32_s> zero_one) :
+    template<class Led>
+    strip<Led>::strip(std::pair<rmt_item32_s, rmt_item32_s> zero_one) :
             _zero{zero_one.first},
             _one{zero_one.second} {}
 
-    template<class Pix>
-    std::size_t strip<Pix>::size() const {
+    template<class Led>
+    std::size_t strip<Led>::size() const {
         return _pixels.size();
     }
 
-    template<class Pix>
-    void strip<Pix>::resize(std::size_t new_size, Pix pix) {
+    template<class Led>
+    void strip<Led>::resize(std::size_t new_size, Led pix) {
         const auto old_size = size();
         _pixels.resize(new_size, pix);
-        _rmt_buffer.resize(new_size * 8 * sizeof(Pix), zero());
+        _rmt_buffer.resize(new_size * 8 * sizeof(Led), zero());
         if (new_size > old_size) {
             for (std::size_t i = old_size; i < new_size; ++i) {
                 (*this)[i] = pix;
@@ -179,53 +182,53 @@ namespace neo {
         }
     }
 
-    template<class Pix>
-    void strip<Pix>::clear() {
+    template<class Led>
+    void strip<Led>::clear() {
         _pixels.clear();
         _rmt_buffer.clear();
     }
 
-    template<class Pix>
+    template<class Led>
     template<class Neopix, class CRTPIt>
-    decltype(auto) strip<Pix>::iterator_base<Neopix, CRTPIt>::operator*() const {
+    decltype(auto) strip<Led>::iterator_base<Neopix, CRTPIt>::operator*() const {
         return (*_neopix)[_i];
     }
 
 
-    template<class Pix>
+    template<class Led>
     template<class Neopix, class CRTPIt>
-    CRTPIt &strip<Pix>::iterator_base<Neopix, CRTPIt>::operator++() {
+    CRTPIt &strip<Led>::iterator_base<Neopix, CRTPIt>::operator++() {
         ++_i;
         return *this;
     }
 
-    template<class Pix>
+    template<class Led>
     template<class Neopix, class CRTPIt>
-    const CRTPIt strip<Pix>::iterator_base<Neopix, CRTPIt>::operator++(int) {
+    const CRTPIt strip<Led>::iterator_base<Neopix, CRTPIt>::operator++(int) {
         iterator_base<Neopix, CRTPIt> copy = *this;
         ++(*this);
         return copy;
     }
 
-    template<class Pix>
+    template<class Led>
     template<class Neopix, class CRTPIt>
-    CRTPIt &strip<Pix>::iterator_base<Neopix, CRTPIt>::operator--() {
+    CRTPIt &strip<Led>::iterator_base<Neopix, CRTPIt>::operator--() {
         --_i;
         return *this;
     }
 
-    template<class Pix>
+    template<class Led>
     template<class Neopix, class CRTPIt>
-    const CRTPIt strip<Pix>::iterator_base<Neopix, CRTPIt>::operator--(int) {
+    const CRTPIt strip<Led>::iterator_base<Neopix, CRTPIt>::operator--(int) {
         iterator_base<Neopix, CRTPIt> copy = *this;
         --(*this);
         return copy;
     }
 
 
-    template<class Pix>
+    template<class Led>
     template<class Neopix, class CRTPIt>
-    bool strip<Pix>::iterator_base<Neopix, CRTPIt>::operator==(CRTPIt const &other) const {
+    bool strip<Led>::iterator_base<Neopix, CRTPIt>::operator==(CRTPIt const &other) const {
         if (_neopix == other._neopix) {
             if (_neopix != nullptr) {
                 return _i == other._i;
@@ -235,103 +238,103 @@ namespace neo {
         return false;
     }
 
-    template<class Pix>
+    template<class Led>
     template<class Neopix, class CRTPIt>
-    bool strip<Pix>::iterator_base<Neopix, CRTPIt>::operator!=(CRTPIt const &other) const {
+    bool strip<Led>::iterator_base<Neopix, CRTPIt>::operator!=(CRTPIt const &other) const {
         return not operator==(other);
     }
 
 
-    template<class Pix>
+    template<class Led>
     template<class Neopix, class CRTPIt>
-    CRTPIt &strip<Pix>::iterator_base<Neopix, CRTPIt>::operator+=(std::size_t n) {
+    CRTPIt &strip<Led>::iterator_base<Neopix, CRTPIt>::operator+=(std::size_t n) {
         _i += n;
         return *this;
     }
 
 
-    template<class Pix>
+    template<class Led>
     template<class Neopix, class CRTPIt>
-    CRTPIt &strip<Pix>::iterator_base<Neopix, CRTPIt>::operator-=(std::size_t n) {
+    CRTPIt &strip<Led>::iterator_base<Neopix, CRTPIt>::operator-=(std::size_t n) {
         _i -= n;
         return *this;
     }
 
-    template<class Pix>
-    strip<Pix>::iterator::operator const_iterator() const {
+    template<class Led>
+    strip<Led>::iterator::operator const_iterator() const {
         if (_neopix == nullptr) {
             return const_iterator{};
         }
         return const_iterator{*_neopix, _i};
     }
 
-    template<class Pix>
-    typename strip<Pix>::const_iterator strip<Pix>::begin() const {
+    template<class Led>
+    typename strip<Led>::const_iterator strip<Led>::begin() const {
         return {*this, 0};
     }
 
-    template<class Pix>
-    typename strip<Pix>::const_iterator strip<Pix>::cbegin() const {
-        return {*this, 0};
-    }
-
-
-    template<class Pix>
-    typename strip<Pix>::const_iterator strip<Pix>::end() const {
-        return {*this, size() - 1};
-    }
-
-
-    template<class Pix>
-    typename strip<Pix>::const_iterator strip<Pix>::cend() const {
-        return {*this, size() - 1};
-    }
-
-
-    template<class Pix>
-    typename strip<Pix>::iterator strip<Pix>::begin() {
+    template<class Led>
+    typename strip<Led>::const_iterator strip<Led>::cbegin() const {
         return {*this, 0};
     }
 
 
-    template<class Pix>
-    typename strip<Pix>::iterator strip<Pix>::end() {
+    template<class Led>
+    typename strip<Led>::const_iterator strip<Led>::end() const {
         return {*this, size() - 1};
     }
 
-    template<class Pix>
-    ref<Pix> strip<Pix>::operator[](std::size_t i) {
+
+    template<class Led>
+    typename strip<Led>::const_iterator strip<Led>::cend() const {
+        return {*this, size() - 1};
+    }
+
+
+    template<class Led>
+    typename strip<Led>::iterator strip<Led>::begin() {
+        return {*this, 0};
+    }
+
+
+    template<class Led>
+    typename strip<Led>::iterator strip<Led>::end() {
+        return {*this, size() - 1};
+    }
+
+    template<class Led>
+    ref<Led> strip<Led>::operator[](std::size_t i) {
         using diff_t = typename decltype(_rmt_buffer)::difference_type;
-        return ref{_pixels.at(i), std::begin(_rmt_buffer) + diff_t(i * 8 * sizeof(Pix)), *this};
+        return ref{_pixels.at(i), std::begin(_rmt_buffer) + diff_t(i * 8 * sizeof(Led)), *this};
     }
 
-    template<class Pix>
-    cref<Pix> strip<Pix>::operator[](std::size_t i) const {
+    template<class Led>
+    cref<Led> strip<Led>::operator[](std::size_t i) const {
         return cref{_pixels.at(i)};
     }
 
-    template<class Pix>
-    bool strip<Pix>::empty() const {
+    template<class Led>
+    bool strip<Led>::empty() const {
         return _pixels.empty();
     }
 
-    template<class Pix>
-    cref<Pix>::operator Pix() const {
+    template<class Led>
+    cref<Led>::operator Led() const {
         return _cref;
     }
 
-    template<class Pix>
-    cref<Pix>::cref(Pix const &cref) : _cref{cref} {}
+    template<class Led>
+    cref<Led>::cref(Led const &cref) : _cref{cref} {}
 
-    template<class Pix>
-    ref<Pix>::ref(Pix &ref, std::vector<rmt_item32_s>::iterator repr_it, strip<Pix> const &neo) :
-            cref<Pix>{ref},
+    template<class Led>
+    ref<Led>::ref(Led &ref, std::vector<rmt_item32_s>::iterator repr_it, strip<Led> const &neo) :
+            cref<Led>{ref},
             _neopixel{neo},
             _repr_it{repr_it} {}
 
-    template<class Pix>
-    ref<Pix> &ref<Pix>::operator=(Pix v) {
-        Pix &pix = const_cast<Pix &>(cref<Pix>::_cref);
+    template<class Led>
+    ref<Led> &ref<Led>::operator=(Led v) {
+        Led &pix = const_cast<Led &>(cref<Led>::_cref);
         pix = v;
         // Make sure to copy the byte representation
         populate(_repr_it, pix, _neopixel.zero(), _neopixel.one());
@@ -356,18 +359,18 @@ namespace neo {
     }
 
 
-    template<class Pix>
-    rmt_item32_s strip<Pix>::zero() const {
+    template<class Led>
+    rmt_item32_s strip<Led>::zero() const {
         return _zero;
     }
 
-    template<class Pix>
-    rmt_item32_s strip<Pix>::one() const {
+    template<class Led>
+    rmt_item32_s strip<Led>::one() const {
         return _one;
     }
 
-    template<class Pix>
-    esp_err_t strip<Pix>::transmit(rmt_channel_t channel, bool wait_tx_done) const {
+    template<class Led>
+    esp_err_t strip<Led>::transmit(rmt_channel_t channel, bool wait_tx_done) const {
         return rmt_write_items(channel, _rmt_buffer.data(), _rmt_buffer.size(), wait_tx_done);
     }
 }
