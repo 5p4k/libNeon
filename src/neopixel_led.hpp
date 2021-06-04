@@ -4,6 +4,8 @@
 
 #ifndef PICOSKATE_NEOPIXEL_LED_HPP
 #define PICOSKATE_NEOPIXEL_LED_HPP
+
+#include "neopixel_color.hpp"
 #include <array>
 #include <algorithm>
 
@@ -31,10 +33,14 @@ namespace neo {
     class led : private channel_pack<Channels...> {
     public:
         led() = default;
-        inline led(std::uint32_t rgb);
-        inline led(std::array<std::uint8_t, 3> rgb);
-        inline led(std::initializer_list<std::uint8_t> rgb);
-        inline explicit led(std::uint8_t r, std::uint8_t g, std::uint8_t b);
+
+        /**
+         *
+         * @tparam Arg0 Dirty trick to match only >= 1 parameter packs, so that we are sure to be default constructible
+         * @tparam Args `(Arg0, Args...)` together can construct @ref hsv or @ref rgb
+         */
+        template <class Arg0, class ...Args>
+        inline led(Arg0 && arg0, Args &&...args);
 
         template <led_channel Channel>
         void set(std::uint8_t v);
@@ -43,6 +49,9 @@ namespace neo {
         template <led_channel Channel>
         [[nodiscard]] inline std::uint8_t get() const;
         [[nodiscard]] inline std::uint8_t get(led_channel chn) const;
+
+        [[nodiscard]] inline rgb rgb_color() const;
+        [[nodiscard]] inline hsv hsv_color() const;
     };
 
     using grb_led = led<led_channel::green, led_channel::red, led_channel::blue>;
@@ -96,36 +105,33 @@ namespace neo {
     }
 
     template <led_channel ...Channels>
-    led<Channels...>::led(std::uint32_t rgb) : led{
-        std::uint8_t(0xff & (rgb >> 16)),
-        std::uint8_t(0xff & (rgb >> 8)),
-        std::uint8_t(0xff & rgb)}
-    {}
-
-
-    template <led_channel ...Channels>
-    led<Channels...>::led(std::array<std::uint8_t, 3> rgb) : led{rgb[0], rgb[1], rgb[2]} {}
-
-    template <led_channel ...Channels>
-    led<Channels...>::led(std::initializer_list<std::uint8_t> rgb) : led{} {
-        auto it = std::begin(rgb);
-        auto end = std::end(rgb);
-        if (it != end) {
-            set<led_channel::red>(*it++);
-        }
-        if (it != end) {
-            set<led_channel::green>(*it++);
-        }
-        if (it != end) {
-            set<led_channel::blue>(*it++);
-        }
+    rgb led<Channels...>::rgb_color() const {
+        return {get<led_channel::red>(), get<led_channel::green>(), get<led_channel::blue>()};
     }
 
     template <led_channel ...Channels>
-    led<Channels...>::led(std::uint8_t r, std::uint8_t g, std::uint8_t b) : led{} {
-        set<led_channel::red>(r);
-        set<led_channel::green>(g);
-        set<led_channel::blue>(b);
+    hsv led<Channels...>::hsv_color() const {
+        return rgb_color().to_hsv();
+    }
+
+
+    template <led_channel ...Channels>
+    template <class Arg0, class ...Args>
+    led<Channels...>::led(Arg0 &&arg0, Args &&...args) : led{} {
+        if constexpr(std::is_constructible_v<rgb, Arg0, Args...>) {
+            rgb color(std::forward<Arg0>(arg0), std::forward<Args>(args)...);
+            set<led_channel::red>(color.r);
+            set<led_channel::green>(color.g);
+            set<led_channel::blue>(color.b);
+        } else if constexpr(std::is_constructible_v<hsv, Arg0, Args...>) {
+            rgb color = hsv(std::forward<Arg0>(arg0), std::forward<Args>(args)...).to_rgb();
+            set<led_channel::red>(color.r);
+            set<led_channel::green>(color.g);
+            set<led_channel::blue>(color.b);
+        } else {
+            static_assert(std::is_constructible_v<rgb, Args...> or std::is_constructible_v<hsv, Args...>,
+                          "I cannot construct neither neo::rgb nor neo::hsv with these arguments.");
+        }
     }
 }
 
