@@ -142,37 +142,44 @@ namespace neo {
 
     rgb rgb::update(maybe_update<std::uint8_t> r_, maybe_update<std::uint8_t> g_, maybe_update<std::uint8_t> b_) const {
         rgb retval = *this;
-        return retval.update(r_, g_, b_);
+        retval.update(r_, g_, b_);
+        return retval;
     }
 
     rgb rgb::shift(maybe_update<signed> dr, maybe_update<signed> dg, maybe_update<signed> db) const {
         rgb retval = *this;
-        return retval.shift(dr, dg, db);
+        retval.shift(dr, dg, db);
+        return retval;
     }
 
     rgb rgb::shift(rgb const &delta, bool negate) const {
         rgb retval = *this;
-        return retval.shift(delta, negate);
+        retval.shift(delta, negate);
+        return retval;
     }
 
     hsv hsv::update(maybe_update<float> h_, maybe_update<float> s_, maybe_update<float> v_) const {
         hsv retval = *this;
-        return retval.update(h_, s_, v_);
+        retval.update(h_, s_, v_);
+        return retval;
     }
 
     hsv hsv::shift(maybe_update<float> dh, maybe_update<float> ds, maybe_update<float> dv) const {
         hsv retval = *this;
-        return retval.shift(dh, ds, dv);
+        retval.shift(dh, ds, dv);
+        return retval;
     }
 
     hsv hsv::shift(hsv const &delta, bool negate) const {
         hsv retval = *this;
-        return retval.shift(delta, negate);
+        retval.shift(delta, negate);
+        return retval;
     }
 
     rgb rgb::blend(rgb const &target, float factor) const {
         rgb retval = *this;
-        return retval.blend(target, factor);
+        retval.blend(target, factor);
+        return retval;
     }
 
 }
