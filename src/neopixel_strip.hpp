@@ -57,7 +57,8 @@ namespace neo {
 
         void clear();
 
-        void resize(std::size_t new_size, Led pix);
+        inline void resize(std::size_t new_size);
+        void resize(std::size_t new_size, Led led);
 
         [[nodiscard]] inline ref<Led> operator[](std::size_t i);
 
@@ -171,13 +172,18 @@ namespace neo {
     }
 
     template<class Led>
-    void strip<Led>::resize(std::size_t new_size, Led pix) {
+    void strip<Led>::resize(std::size_t new_size) {
+        resize(new_size, Led{});
+    }
+
+    template<class Led>
+    void strip<Led>::resize(std::size_t new_size, Led led) {
         const auto old_size = size();
-        _pixels.resize(new_size, pix);
+        _pixels.resize(new_size, led);
         _rmt_buffer.resize(new_size * 8 * sizeof(Led), zero());
         if (new_size > old_size) {
             for (std::size_t i = old_size; i < new_size; ++i) {
-                (*this)[i] = pix;
+                (*this)[i] = led;
             }
         }
     }
@@ -334,10 +340,10 @@ namespace neo {
 
     template<class Led>
     ref<Led> &ref<Led>::operator=(Led v) {
-        Led &pix = const_cast<Led &>(cref<Led>::_cref);
-        pix = v;
+        Led &led = const_cast<Led &>(cref<Led>::_cref);
+        led = v;
         // Make sure to copy the byte representation
-        populate(_repr_it, pix, _neopixel.zero(), _neopixel.one());
+        populate(_repr_it, led, _neopixel.zero(), _neopixel.one());
         return *this;
     }
 
