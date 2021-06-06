@@ -26,11 +26,11 @@ namespace neo {
         fixed_gradient_entry &operator=(fixed_gradient_entry &&) noexcept = default;
 
     public:
-        [[nodiscard]] float time() const;
+        [[nodiscard]] inline float time() const;
 
-        [[nodiscard]] rgb const &color() const;
+        [[nodiscard]] inline rgb const &color() const;
 
-        void set_color(rgb color);
+        inline void set_color(rgb color);
 
         fixed_gradient_entry() = default;
 
@@ -38,9 +38,9 @@ namespace neo {
 
         fixed_gradient_entry(fixed_gradient_entry &&) noexcept = default;
 
-        fixed_gradient_entry(float t, rgb c);
+        inline fixed_gradient_entry(float t, rgb c);
 
-        fixed_gradient_entry &operator=(rgb c);
+        inline fixed_gradient_entry &operator=(rgb c);
     };
 
     class gradient_entry : protected fixed_gradient_entry {
@@ -53,7 +53,7 @@ namespace neo {
         using fixed_gradient_entry::color;
         using fixed_gradient_entry::set_color;
 
-        void set_time(float t);
+        inline void set_time(float t);
 
         gradient_entry() = default;
 
@@ -71,6 +71,12 @@ namespace neo {
     public:
         using iterator = gradient_entry *;
         using const_iterator = fixed_gradient_entry const *;
+
+        gradient() = default;
+        explicit gradient(std::vector<gradient_entry> entries);
+        explicit gradient(std::vector<fixed_gradient_entry> const &entries);
+        explicit gradient(std::vector<rgb> const &colors);
+        explicit gradient(std::vector<hsv> const &colors);
 
         [[nodiscard]] inline std::size_t size() const;
 

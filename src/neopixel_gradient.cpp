@@ -132,4 +132,38 @@ namespace neo {
             return method(lb->color(), ub->color(), t);
         }
     }
+
+    gradient::gradient(std::vector<gradient_entry> entries) : _entries{std::move(entries)} {
+        std::sort(std::begin(entries), std::end(entries), safe_less{});
+        normalize();
+    }
+    gradient::gradient(std::vector<fixed_gradient_entry> const &entries) {
+        _entries.reserve(entries.size());
+        for (auto const &entry : entries) {
+            _entries.emplace_back(entry.time(), entry.color());
+        }
+        std::sort(std::begin(_entries), std::end(_entries), safe_less{});
+        normalize();
+    }
+    gradient::gradient(std::vector<rgb> const &colors) {
+        _entries.reserve(colors.size());
+        float t = 0.f;
+        const float dt = 1.f / float(colors.size());
+        for (auto c : colors) {
+            _entries.emplace_back(t, c);
+            t += dt;
+        }
+        normalize();
+    }
+
+    gradient::gradient(std::vector<hsv> const &colors) {
+        _entries.reserve(colors.size());
+        float t = 0.f;
+        const float dt = 1.f / float(colors.size());
+        for (auto c : colors) {
+            _entries.emplace_back(t, c.to_rgb());
+            t += dt;
+        }
+        normalize();
+    }
 }
