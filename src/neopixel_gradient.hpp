@@ -92,8 +92,9 @@ namespace neo {
 
         [[nodiscard]] inline fixed_gradient_entry const &back() const;
 
-        inline iterator emplace(fixed_gradient_entry entry);
-        iterator emplace(gradient_entry entry);
+        inline std::pair<iterator, bool> emplace(fixed_gradient_entry entry);
+
+        std::pair<iterator, bool> emplace(gradient_entry entry);
 
         [[nodiscard]] const_iterator lower_bound(float t) const;
 
@@ -174,7 +175,7 @@ namespace neo {
         _time = t;
     }
 
-    gradient::iterator gradient::emplace(fixed_gradient_entry entry) {
+    std::pair<gradient::iterator, bool> gradient::emplace(fixed_gradient_entry entry) {
         return emplace(gradient_entry{entry.time(), entry.color()});
     }
 

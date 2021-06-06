@@ -4,6 +4,7 @@
 
 #include "neopixel_gradient.hpp"
 #include <cassert>
+#include <cmath>
 
 namespace neo {
 
@@ -47,10 +48,23 @@ namespace neo {
         return std::upper_bound(std::begin(*this), std::end(*this), t, safe_less{});
     }
 
-    gradient::iterator gradient::emplace(gradient_entry entry) {
+    std::pair<gradient::iterator, bool> gradient::emplace(gradient_entry entry) {
+        auto convert_it = [&] (auto entries_it) {
+            return std::begin(*this) + std::distance(std::begin(_entries), entries_it);
+        };
+
         auto it = std::upper_bound(std::begin(_entries), std::end(_entries), entry.time(), safe_less{});
+        if (it != std::begin(_entries)) {
+            // Make sure there is no duplicate
+            auto prev_it = std::prev(it);
+            if (not safe_less{}(prev_it->time(), entry.time())) {
+                assert(not safe_less{}(prev_it->time(), entry.time()) and not safe_less{}(entry.time(), prev_it->time()));
+                return {convert_it(prev_it), false};
+            }
+        }
         it = _entries.insert(it, entry);
-        return std::begin(*this) + std::distance(std::begin(_entries), it);
+        assert(std::is_sorted(std::begin(_entries), std::end(_entries), safe_less{}));
+        return {convert_it(it), true};
     }
 
     void  gradient::normalize() {
@@ -64,8 +78,13 @@ namespace neo {
         } else {
             const float min = _entries.front().time();
             const float delta = _entries.back().time() - min;
+            float last_time = std::numeric_limits<float>::lowest();
             for (auto &entry : _entries) {
-                entry.set_time(std::clamp((entry.time() - min) / delta, 0.f, 1.f));
+                // Make sure we can actually guarantee monotonicity
+                last_time = std::clamp((entry.time() - min) / delta,
+                                       std::nextafter(last_time, 2.f),
+                                       1.f);
+                entry.set_time(last_time);
             }
             assert(std::is_sorted(std::begin(_entries), std::end(_entries), safe_less{}));
         }
