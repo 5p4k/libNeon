@@ -108,6 +108,9 @@ namespace neo {
     }
 
     rgb gradient::sample(float t, blending_method method) const {
+        if (not std::isfinite(t)) {
+            t = 0.f;
+        }
         if (empty()) {
             return {};
         } else if (size() == 1) {
