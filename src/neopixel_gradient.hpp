@@ -11,10 +11,10 @@
 namespace neo {
     using blending_method = rgb (*)(rgb const &l, rgb const &r, float t);
 
-    rgb blend_linear(rgb const &l, rgb const &r, float t);
-    rgb blend_round_down(rgb const &l, rgb const &, float);
-    rgb blend_round_up(rgb const &, rgb const &r, float);
-    rgb blend_nearest_neighbor(rgb const &l, rgb const &r, float t);
+    [[maybe_unused]] rgb blend_linear(rgb const &l, rgb const &r, float t);
+    [[maybe_unused]] rgb blend_round_down(rgb const &l, rgb const &, float);
+    [[maybe_unused]] rgb blend_round_up(rgb const &, rgb const &r, float);
+    [[maybe_unused]] rgb blend_nearest_neighbor(rgb const &l, rgb const &r, float t);
 
     class fixed_gradient_entry {
     protected:
