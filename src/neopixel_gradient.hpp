@@ -9,7 +9,7 @@
 #include <vector>
 
 namespace neo {
-    using blending_method = rgb (*)(rgb const &l, rgb const &r, float t);
+    using blending_method = rgb (&)(rgb const &l, rgb const &r, float t);
 
     [[maybe_unused]] rgb blend_linear(rgb const &l, rgb const &r, float t);
     [[maybe_unused]] rgb blend_round_down(rgb const &l, rgb const &, float);
