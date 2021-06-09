@@ -112,6 +112,12 @@ namespace neo {
     template<class Led>
     class strip<Led>::const_iterator : public iterator_base<strip const, const_iterator> {
     public:
+        using iterator_category = std::random_access_iterator_tag;
+        using value_type = decltype(std::declval<strip const &>()[0]);
+        using difference_type = void;
+        using pointer = void;
+        using reference = void;
+
         using iterator_base<strip const, const_iterator>::iterator_base;
     };
 
@@ -119,9 +125,15 @@ namespace neo {
     template<class Led>
     class strip<Led>::iterator : public iterator_base<strip, iterator> {
     protected:
-        using iterator_base<strip const, const_iterator>::_neopix;
-        using iterator_base<strip const, const_iterator>::_i;
+        using iterator_base<strip, iterator>::_neopix;
+        using iterator_base<strip, iterator>::_i;
     public:
+        using iterator_category = std::random_access_iterator_tag;
+        using value_type = decltype(std::declval<strip &>()[0]);
+        using difference_type = void;
+        using pointer = void;
+        using reference = void;
+
         using iterator_base<strip, iterator>::iterator_base;
 
         inline operator const_iterator() const;
@@ -205,13 +217,13 @@ namespace neo {
     template<class Neopix, class CRTPIt>
     CRTPIt &strip<Led>::iterator_base<Neopix, CRTPIt>::operator++() {
         ++_i;
-        return *this;
+        return *reinterpret_cast<CRTPIt *>(this);
     }
 
     template<class Led>
     template<class Neopix, class CRTPIt>
     const CRTPIt strip<Led>::iterator_base<Neopix, CRTPIt>::operator++(int) {
-        iterator_base<Neopix, CRTPIt> copy = *this;
+        CRTPIt copy = *reinterpret_cast<CRTPIt *>(this);
         ++(*this);
         return copy;
     }
@@ -220,13 +232,13 @@ namespace neo {
     template<class Neopix, class CRTPIt>
     CRTPIt &strip<Led>::iterator_base<Neopix, CRTPIt>::operator--() {
         --_i;
-        return *this;
+        return *reinterpret_cast<CRTPIt *>(this);
     }
 
     template<class Led>
     template<class Neopix, class CRTPIt>
     const CRTPIt strip<Led>::iterator_base<Neopix, CRTPIt>::operator--(int) {
-        iterator_base<Neopix, CRTPIt> copy = *this;
+        CRTPIt copy = *reinterpret_cast<CRTPIt *>(this);
         --(*this);
         return copy;
     }
@@ -235,9 +247,10 @@ namespace neo {
     template<class Led>
     template<class Neopix, class CRTPIt>
     bool strip<Led>::iterator_base<Neopix, CRTPIt>::operator==(CRTPIt const &other) const {
-        if (_neopix == other._neopix) {
+        auto const &other_base = static_cast<iterator_base<Neopix, CRTPIt> const &>(other);
+        if (_neopix == other_base._neopix) {
             if (_neopix != nullptr) {
-                return _i == other._i;
+                return _i == other_base._i;
             }
             return true;
         }
