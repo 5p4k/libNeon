@@ -8,6 +8,7 @@
 #include "neopixel_gradient.hpp"
 #include "neopixel_strip.hpp"
 #include <chrono>
+#include <functional>
 
 namespace neo {
     namespace {
@@ -32,6 +33,9 @@ namespace neo {
         std::vector<rgb> update(strip<Led> &strip, std::chrono::milliseconds time_since_start, std::vector<rgb> buffer = {}, blending_method method = blend_linear) const;
 
         [[nodiscard]] std::vector<rgb> sample(std::size_t n_leds, std::chrono::milliseconds time_since_start, std::vector<rgb> recycle_buffer = {}, blending_method method = blend_linear) const;
+
+        template <class Led>
+        [[nodiscard]] std::function<void(std::chrono::milliseconds)> make_steady_timer_callback(strip<Led> &strip, rmt_channel_t channel, blending_method method = blend_linear) const;
     };
 }
 
@@ -67,6 +71,15 @@ namespace neo {
         buffer = sample(strip.size(), time_since_start, std::move(buffer), method);
         std::copy(std::begin(buffer), std::end(buffer), std::begin(strip));
         return buffer;
+    }
+
+    template <class Led>
+    std::function<void(std::chrono::milliseconds)> gradient_fx::make_steady_timer_callback(strip<Led> &strip, rmt_channel_t channel, blending_method method) const {
+        return [buffer = std::vector<rgb>{}, &strip, channel, method, *this] (std::chrono::milliseconds elapsed) mutable {
+            // Use lambda initialization syntax and mutability to always recycle the buffer
+            buffer = this->template update(strip, elapsed, std::move(buffer), method);
+            strip.transmit(channel, false);
+        };
     }
 }
 
