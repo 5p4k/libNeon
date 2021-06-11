@@ -8,12 +8,16 @@
 namespace neo {
 
     namespace {
-        std::uint8_t f2b(float f) {
-            return std::uint8_t(std::round(std::clamp(f * 255.f, 0.f, 255.f)));
+        std::uint8_t round_float_to_byte(float f) {
+            return std::uint8_t(std::round(std::clamp(f, 0.f, 255.f)));
         }
 
-        std::array<std::uint8_t, 3> f2b(std::array<float, 3> f) {
-            return {f2b(f[0]), f2b(f[1]), f2b(f[2])};
+        std::uint8_t unit_float_to_byte(float f) {
+            return round_float_to_byte(255.f * f);
+        }
+
+        std::array<std::uint8_t, 3> unit_float_to_byte(std::array<float, 3> f) {
+            return {unit_float_to_byte(f[0]), unit_float_to_byte(f[1]), unit_float_to_byte(f[2])};
         }
     }
 
@@ -45,7 +49,7 @@ namespace neo {
         const float s_ = std::clamp(s, 0.f, 1.f);
         const float v_ = std::clamp(v, 0.f, 1.f);
         if (s_ < std::numeric_limits<float>::epsilon()) {
-            const std::uint8_t gray = f2b(v_);
+            const std::uint8_t gray = unit_float_to_byte(v_);
             return {gray, gray, gray};
         }
         // Remap in 0...6
@@ -56,17 +60,17 @@ namespace neo {
         const float x = v_ * (1.f - s_ * (hue_block % 2 == 0 ? 1.f - h_ + hue_floor : h_ - hue_floor));
         switch (hue_block) {
             case 0:
-                return f2b({v_, x, m});
+                return unit_float_to_byte({v_, x, m});
             case 1:
-                return f2b({x, v_, m});
+                return unit_float_to_byte({x, v_, m});
             case 2:
-                return f2b({m, v_, x});
+                return unit_float_to_byte({m, v_, x});
             case 3:
-                return f2b({m, x, v_});
+                return unit_float_to_byte({m, x, v_});
             case 4:
-                return f2b({x, m, v_});
+                return unit_float_to_byte({x, m, v_});
             default:
-                return f2b({v_, m, x});
+                return unit_float_to_byte({v_, m, x});
         }
     }
 
@@ -108,9 +112,9 @@ namespace neo {
 
     rgb &rgb::blend(const rgb &target, float factor) {
         factor = std::clamp(factor, 0.f, 1.f);
-        r = f2b(float(r) * (1.f - factor) + float(target.r) * factor);
-        g = f2b(float(g) * (1.f - factor) + float(target.g) * factor);
-        b = f2b(float(b) * (1.f - factor) + float(target.b) * factor);
+        r = round_float_to_byte(float(r) * (1.f - factor) + float(target.r) * factor);
+        g = round_float_to_byte(float(g) * (1.f - factor) + float(target.g) * factor);
+        b = round_float_to_byte(float(b) * (1.f - factor) + float(target.b) * factor);
         return *this;
     }
 

@@ -113,24 +113,16 @@ namespace neo {
         }
         if (empty()) {
             return {};
-        } else if (size() == 1) {
-            return front().color();
-        } else if (safe_less{}(t, front().time())) {
-            return front().color();
-        } else if (safe_less{}(back().time(), t)) {
-            return back().color();
-        } else {
-            const auto lb = lower_bound(t);
-            if (lb == std::end(*this)) {
-                return back().color();
-            }
-            const auto ub = std::next(lb);
-            if (ub == std::end(*this)) {
-                return back().color();
-            }
-            t = std::clamp((t - lb->time()) / (ub->time() - lb->time()), 0.f, 1.f);
-            return method(lb->color(), ub->color(), t);
         }
+        const auto ub = upper_bound(t);
+        if (ub == std::begin(*this)) {
+            return front().color();
+        } else if (ub == std::end(*this)) {
+            return back().color();
+        }
+        const auto lb = std::prev(ub);
+        t = std::clamp((t - lb->time()) / (ub->time() - lb->time()), 0.f, 1.f);
+        return method(lb->color(), ub->color(), t);
     }
 
     gradient::gradient(std::vector<gradient_entry> entries) : _entries{std::move(entries)} {
