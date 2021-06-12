@@ -23,7 +23,7 @@ namespace neo {
     public:
         generic_timer();
 
-        generic_timer(std::string name_, std::chrono::milliseconds period, std::function<void(generic_timer &)> cbk, bool start = false);
+        generic_timer(std::string name_, std::chrono::milliseconds period, std::function<void(generic_timer &)> cbk);
 
         generic_timer(generic_timer const &) = delete;
 
@@ -75,7 +75,8 @@ namespace neo {
 
         steady_timer();
 
-        steady_timer(std::string name_, std::chrono::milliseconds period, std::function<void(std::chrono::milliseconds)> cbk, bool start = false);
+        steady_timer(std::string name_, std::chrono::milliseconds period,
+                     std::function<void(std::chrono::milliseconds)> cbk);
 
         steady_timer(steady_timer const &) = delete;
         steady_timer(steady_timer &&) noexcept = default;

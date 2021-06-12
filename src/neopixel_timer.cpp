@@ -36,16 +36,13 @@ namespace neo {
         *this = std::move(t);
     }
 
-    generic_timer::generic_timer(std::string name_, std::chrono::milliseconds period, std::function<void(generic_timer &)> cbk,
-                                 bool start) :
+    generic_timer::generic_timer(std::string name_, std::chrono::milliseconds period, std::function<void(generic_timer &)> cbk) :
             _name{std::move(name_)},
             _timer{nullptr},
             _cbk{std::move(cbk)} {
         _timer = xTimerCreate(name().c_str(), pdMS_TO_TICKS(period.count()), pdTRUE, this, &callback);
         if (_timer == nullptr) {
             ESP_LOGE("TIMER", "Could not create generic_timer \"%s\".", name().c_str());
-        } else if (start) {
-            this->start();
         }
     }
 
@@ -120,11 +117,11 @@ namespace neo {
     }
 
     steady_timer::steady_timer(std::string name_, std::chrono::milliseconds period,
-                               std::function<void(std::chrono::milliseconds)> cbk, bool start) :
+                               std::function<void(std::chrono::milliseconds)> cbk) :
             generic_timer{std::move(name_), period,
                           [elapsed_cbk = std::move(cbk)](generic_timer &gt) {
                               elapsed_cbk(reinterpret_cast<steady_timer *>(&gt)->elapsed());
-                          }, start},
+                          }},
             _last_start{std::chrono::steady_clock::now()},
             _previous_laps_duration{0ms} {}
 
