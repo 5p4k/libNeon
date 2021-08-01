@@ -8,6 +8,13 @@
 
 namespace neo {
 
+    namespace {
+        constexpr std::array<std::array<const char *, TIMER_MAX>, TIMER_GROUP_MAX> timer_desc{{
+              {{"NEO Timer 0:0", "NEO Timer 0:1"}},
+              {{"NEO Timer 1:0", "NEO Timer 1:1"}}
+        }};
+    }
+
     generic_timer::generic_timer(std::chrono::milliseconds period,
                                  std::function<void(generic_timer &)> cbk, BaseType_t core_affinity,
                                  timer_idx_t timer_idx,
@@ -17,37 +24,38 @@ namespace neo {
             _idx{timer_idx},
             _core_affinity{core_affinity},
             _cbk{std::move(cbk)},
-            _semaphore{nullptr},
             _cbk_task{nullptr},
             _period{period},
-            _active{false} {
+            _active{false}
+    {
+        ESP_LOGD("TIMER", "Creating timer %d:%d with period %lld", group(), index(), period.count());
         ESP_ERROR_CHECK(timer_init(group(), index(), &_cfg));
         ESP_ERROR_CHECK(timer_set_counter_value(group(), index(), 0));
         ESP_ERROR_CHECK(timer_set_alarm_value(group(), index(), get_alarm_value(this->period())));
-        kickoff_cbk_task();
+        setup_callbacks();
     }
 
     generic_timer &generic_timer::operator=(generic_timer &&t) noexcept {
+        // We have to stop the tasks and restart when we move because we will likely change the "this" argument.
         if (is_valid_timer()) {
-            delete_cbk_task();
+            teardown_callbacks();
         }
         if (t.is_valid_timer()) {
-            t.delete_cbk_task();
+            t.teardown_callbacks();
         }
         std::swap(_cfg, t._cfg);
         std::swap(_group, t._group);
         std::swap(_idx, t._idx);
         std::swap(_core_affinity, t._core_affinity);
         std::swap(_cbk, t._cbk);
-        std::swap(_semaphore, t._semaphore);
         std::swap(_cbk_task, t._cbk_task);
         std::swap(_period, t._period);
         std::swap(_active, t._active);
         if (t.is_valid_timer()) {
-            t.kickoff_cbk_task();
+            t.setup_callbacks();
         }
         if (is_valid_timer()) {
-            kickoff_cbk_task();
+            setup_callbacks();
         }
         return *this;
     }
@@ -57,11 +65,10 @@ namespace neo {
     }
 
     void generic_timer::cbk_task_body(void *arg) {
-        static constexpr auto ms_0p1_in_ticks = configTICK_RATE_HZ / 10'000;
         if (auto *instance = reinterpret_cast<generic_timer *>(arg); instance != nullptr) {
-            ESP_LOGD("TIMER", "Timer running on core %d.",  xPortGetCoreID());
+            ESP_LOGD("TIMER", "Timer %d:%d running on core %d.", instance->group(), instance->index(), xPortGetCoreID());
             while (instance->_cbk_task != nullptr /* it's a me :D */) {
-                if (xSemaphoreTake(instance->_semaphore, ms_0p1_in_ticks) == pdTRUE) {
+                if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY) != 0) {
                     instance->_cbk(*instance);
                 }
             }
@@ -70,18 +77,19 @@ namespace neo {
         }
     }
 
-    void generic_timer::kickoff_cbk_task() {
+    void generic_timer::setup_callbacks() {
         if (_cbk_task != nullptr) {
             return;
         }
-        _semaphore = xSemaphoreCreateBinary();
-        configASSERT(_semaphore);
+        // Setup first the callback to the timer
+        ESP_ERROR_CHECK(timer_isr_callback_add(group(), index(), &isr_callback, this, 0));
+        // Setup a pinned task that will call the callback, leaving the ISR callback nice and free
         const auto res = xTaskCreatePinnedToCore(
                 &cbk_task_body,
-                "Generic timer task",
+                timer_desc[group()][index()],
                 CONFIG_ESP_TIMER_TASK_STACK_SIZE,
                 this,
-                (configMAX_PRIORITIES - 5) | portPRIVILEGE_BIT,
+                3 | portPRIVILEGE_BIT,
                 &_cbk_task,
                 core_affinity());
         if (res != pdPASS) {
@@ -91,14 +99,15 @@ namespace neo {
         }
     }
 
-    void generic_timer::delete_cbk_task() {
+    void generic_timer::teardown_callbacks() {
         if (_cbk_task == nullptr) {
             return;
         }
+        // Stop first the callback
+        ESP_ERROR_CHECK(timer_isr_callback_remove(group(), index()));
+        // And now delete the task
         vTaskDelete(_cbk_task);
         _cbk_task = nullptr;
-        vPortFree(_semaphore);
-        _semaphore = nullptr;
     }
 
     bool generic_timer::is_valid_timer() const {
@@ -107,6 +116,7 @@ namespace neo {
 
     void generic_timer::start() {
         if (is_valid_timer()) {
+            ESP_LOGD("TIMER", "Starting timer %d:%d", group(), index());
             ESP_ERROR_CHECK(timer_start(group(), index()));
             _active = true;
         }
@@ -115,12 +125,10 @@ namespace neo {
     bool generic_timer::isr_callback(void *arg) {
         if (auto *instance = reinterpret_cast<generic_timer *>(arg); instance != nullptr) {
             BaseType_t high_task_awoken = pdFALSE;
-            xSemaphoreGiveFromISR(instance->_semaphore, &high_task_awoken);
+            vTaskNotifyGiveFromISR(instance->_cbk_task, &high_task_awoken);
             return high_task_awoken == pdTRUE; // Return whether we need to yield at the end of ISR
-        } else {
-            ESP_LOGE("TIMER", "Null generic_timer instance.");
-            return pdFALSE;
         }
+        return pdFALSE;
     }
 
     std::uint64_t generic_timer::get_alarm_value(std::chrono::milliseconds period) {
@@ -129,6 +137,7 @@ namespace neo {
 
     void generic_timer::stop() {
         if (is_valid_timer()) {
+            ESP_LOGD("TIMER", "Stopping timer %d:%d", group(), index());
             ESP_ERROR_CHECK(timer_pause(group(), index()));
             _active = false;
         }
@@ -136,13 +145,15 @@ namespace neo {
 
     void generic_timer::reset() {
         if (is_valid_timer()) {
+            ESP_LOGD("TIMER", "Resetting timer %d:%d", group(), index());
             ESP_ERROR_CHECK(timer_set_counter_value(group(), index(), 0));
         }
     }
 
     generic_timer::~generic_timer() {
         if (is_valid_timer()) {
-            delete_cbk_task();
+            ESP_LOGD("TIMER", "Destroying timer %d:%d", group(), index());
+            teardown_callbacks();
             ESP_ERROR_CHECK(timer_deinit(group(), index()));
         }
     }

@@ -36,7 +36,7 @@ namespace neo {
                 .intr_type = TIMER_INTR_LEVEL,
                 .counter_dir = TIMER_COUNT_UP,
                 .auto_reload = TIMER_AUTORELOAD_EN,
-                .divider = APB_CLK_FREQ / generic_timer_base_frequency
+                .divider = TIMER_BASE_CLK / generic_timer_base_frequency
         };
 
         timer_config_t _cfg = timer_config_default;
@@ -44,7 +44,6 @@ namespace neo {
         timer_idx_t _idx = TIMER_MAX;
         BaseType_t _core_affinity = tskNO_AFFINITY;
         std::function<void(generic_timer &)> _cbk = nullptr;
-        SemaphoreHandle_t _semaphore = nullptr;
         TaskHandle_t _cbk_task = nullptr;
         std::chrono::milliseconds _period = 0ms;
         bool _active = false;
@@ -63,9 +62,9 @@ namespace neo {
 
         [[nodiscard]] inline bool is_valid_timer() const;
 
-        void kickoff_cbk_task();
+        void setup_callbacks();
 
-        void delete_cbk_task();
+        void teardown_callbacks();
 
     public:
         generic_timer() = default;
