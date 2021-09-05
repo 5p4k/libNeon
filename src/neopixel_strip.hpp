@@ -8,6 +8,7 @@
 #include <vector>
 #include <limits>
 #include <neopixel_rmt.hpp>
+#include "neopixel_color.hpp"
 
 namespace neo {
 
@@ -23,9 +24,16 @@ namespace neo {
     template<class Led>
     class cref;
 
+    class transmittable_rgb_strip {
+    public:
+        [[nodiscard]] virtual esp_err_t update(std::vector<rgb> const &colors, rmt_channel_t channel, bool wait_tx_done) const = 0;
+        [[nodiscard]] virtual std::size_t size() const = 0;
+
+        virtual ~transmittable_rgb_strip() = default;
+    };
 
     template<class Led>
-    class strip {
+    class strip final : public transmittable_rgb_strip {
         rmt_item32_s _zero;
         rmt_item32_s _one;
         std::vector<Led> _pixels;
@@ -38,7 +46,9 @@ namespace neo {
 
         strip(rmt_manager const &manager, controller chip);
 
-        esp_err_t transmit(rmt_channel_t channel, bool wait_tx_done) const;
+        [[nodiscard]] esp_err_t update(std::vector<rgb> const &colors, rmt_channel_t channel, bool wait_tx_done) const override;
+
+        [[nodiscard]] esp_err_t transmit(rmt_channel_t channel, bool wait_tx_done) const;
 
         template<class Neopix, class CRTPIt>
         class iterator_base;
@@ -51,7 +61,7 @@ namespace neo {
 
         [[nodiscard]] inline rmt_item32_s one() const;
 
-        [[nodiscard]] inline std::size_t size() const;
+        [[nodiscard]] inline std::size_t size() const override;
 
         [[nodiscard]] inline bool empty() const;
 
@@ -391,6 +401,15 @@ namespace neo {
     template<class Led>
     esp_err_t strip<Led>::transmit(rmt_channel_t channel, bool wait_tx_done) const {
         return rmt_write_items(channel, _rmt_buffer.data(), _rmt_buffer.size(), wait_tx_done);
+    }
+
+    template <class Led>
+    esp_err_t strip<Led>::update(std::vector<rgb> const &colors, rmt_channel_t channel, bool wait_tx_done) const {
+        if (size() != colors.size()) {
+            resize(colors.size(), rgb{0, 0, 0});
+        }
+        std::copy(std::begin(colors), std::end(colors), std::begin(*this));
+        return transmit(channel, wait_tx_done);
     }
 }
 
