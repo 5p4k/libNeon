@@ -26,4 +26,12 @@ namespace neo {
 
         return recycle_buffer;
     }
+
+    std::function<void(std::chrono::milliseconds)> gradient_fx::make_steady_timer_callback(transmittable_rgb_strip &strip, rmt_channel_t channel, blending_method method) const {
+        return [buffer = std::vector<rgb>{}, &strip, channel, method, *this] (std::chrono::milliseconds elapsed) mutable {
+            // Use lambda initialization syntax and mutability to always recycle the buffer
+            buffer = sample(strip.size(), elapsed, std::move(buffer), method);
+            ESP_ERROR_CHECK_WITHOUT_ABORT(strip.update(buffer, channel, false));
+        };
+    }
 }
