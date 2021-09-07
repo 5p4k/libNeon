@@ -26,7 +26,7 @@ namespace neo {
 
     class transmittable_rgb_strip {
     public:
-        [[nodiscard]] virtual esp_err_t update(std::vector<rgb> const &colors, rmt_channel_t channel, bool wait_tx_done) const = 0;
+        [[nodiscard]] virtual esp_err_t update(std::vector<rgb> const &colors, rmt_channel_t channel, bool wait_tx_done) = 0;
         [[nodiscard]] virtual std::size_t size() const = 0;
 
         virtual ~transmittable_rgb_strip() = default;
@@ -46,7 +46,7 @@ namespace neo {
 
         strip(rmt_manager const &manager, controller chip);
 
-        [[nodiscard]] esp_err_t update(std::vector<rgb> const &colors, rmt_channel_t channel, bool wait_tx_done) const override;
+        [[nodiscard]] esp_err_t update(std::vector<rgb> const &colors, rmt_channel_t channel, bool wait_tx_done) override;
 
         [[nodiscard]] esp_err_t transmit(rmt_channel_t channel, bool wait_tx_done) const;
 
@@ -404,7 +404,7 @@ namespace neo {
     }
 
     template <class Led>
-    esp_err_t strip<Led>::update(std::vector<rgb> const &colors, rmt_channel_t channel, bool wait_tx_done) const {
+    esp_err_t strip<Led>::update(std::vector<rgb> const &colors, rmt_channel_t channel, bool wait_tx_done) {
         if (size() != colors.size()) {
             resize(colors.size(), rgb{0, 0, 0});
         }
