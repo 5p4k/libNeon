@@ -59,6 +59,8 @@ namespace neo {
 
         [[nodiscard]] hsv to_hsv() const;
 
+        [[nodiscard]] std::string to_string() const;
+
     };
 
     struct hsv {

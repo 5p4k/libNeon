@@ -4,6 +4,7 @@
 
 #include "neopixel_color.hpp"
 #include <cmath>
+#include <vector>
 
 namespace neo {
 
@@ -19,6 +20,21 @@ namespace neo {
         std::array<std::uint8_t, 3> unit_float_to_byte(std::array<float, 3> f) {
             return {unit_float_to_byte(f[0]), unit_float_to_byte(f[1]), unit_float_to_byte(f[2])};
         }
+    }
+
+    std::string rgb::to_string() const {
+        // Do not use stringstream, it requires tons of memory
+        static thread_local std::vector<char> buffer;
+        static auto attempt_snprintf = [&](std::vector<char> *buffer) -> std::size_t {
+            return std::snprintf(buffer != nullptr ? buffer->data() : nullptr,
+                                 buffer != nullptr ? buffer->size() : 0,
+                                 "#%02x%02x%02x",
+                                 r, g, b);
+        };
+        buffer.clear();
+        buffer.resize(attempt_snprintf(nullptr) + 1 /* null terminator */, '\0');
+        attempt_snprintf(&buffer);
+        return std::string{buffer.data()};
     }
 
     hsv rgb::to_hsv() const {

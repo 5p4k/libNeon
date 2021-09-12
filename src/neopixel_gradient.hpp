@@ -41,6 +41,8 @@ namespace neo {
         inline fixed_gradient_entry(float t, rgb c);
 
         inline fixed_gradient_entry &operator=(rgb c);
+
+        [[nodiscard]] std::string to_string() const;
     };
 
     class gradient_entry : protected fixed_gradient_entry {
@@ -112,6 +114,8 @@ namespace neo {
         [[nodiscard]] inline fixed_gradient_entry &operator[](std::size_t i);
 
         rgb sample(float t, blending_method = blend_linear) const;
+
+        [[nodiscard]] std::string to_string() const;
     };
 }
 

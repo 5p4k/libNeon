@@ -5,6 +5,8 @@
 #include "neopixel_gradient.hpp"
 #include <cassert>
 #include <cmath>
+#include <sstream>
+#include <iomanip>
 
 namespace neo {
 
@@ -105,6 +107,38 @@ namespace neo {
 
     rgb blend_nearest_neighbor(rgb const &l, rgb const &r, float t) {
         return safe_less{}(t, 0.5f) ? l : r;
+    }
+
+    std::string fixed_gradient_entry::to_string() const {
+        static thread_local std::vector<char> buffer;
+        const auto color_str = color().to_string();
+        static auto attempt_snprintf = [&](std::vector<char> *buffer) -> std::size_t {
+            return std::snprintf(buffer != nullptr ? buffer->data() : nullptr,
+                                 buffer != nullptr ? buffer->size() : 0,
+                                 "%0.2f: %s",
+                                 time(), color_str.c_str());
+        };
+        buffer.clear();
+        buffer.resize(attempt_snprintf(nullptr) + 1 /* null terminator */, '\0');
+        attempt_snprintf(&buffer);
+        return std::string{buffer.data()};
+    }
+
+    std::string gradient::to_string() const {
+        // Make a copy and normalize
+        gradient copy = *this;
+        copy.normalize();
+        std::string s;
+        s.reserve(15 * copy.size() + 2);
+        s += '[';
+        for (std::size_t i = 0; i < copy.size(); ++i) {
+            s += copy[i].to_string();
+            if (i < copy.size() - 1) {
+                s += ", ";
+            }
+        }
+        s += ']';
+        return s;
     }
 
     rgb gradient::sample(float t, blending_method method) const {
