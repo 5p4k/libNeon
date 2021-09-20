@@ -112,7 +112,7 @@ namespace neo {
     std::string fixed_gradient_entry::to_string() const {
         static thread_local std::vector<char> buffer;
         const auto color_str = color().to_string();
-        static auto attempt_snprintf = [&](std::vector<char> *buffer) -> std::size_t {
+        auto attempt_snprintf = [&](std::vector<char> *buffer) -> std::size_t {
             return std::snprintf(buffer != nullptr ? buffer->data() : nullptr,
                                  buffer != nullptr ? buffer->size() : 0,
                                  "%0.2f: %s",

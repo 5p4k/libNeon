@@ -25,7 +25,7 @@ namespace neo {
     std::string rgb::to_string() const {
         // Do not use stringstream, it requires tons of memory
         static thread_local std::vector<char> buffer;
-        static auto attempt_snprintf = [&](std::vector<char> *buffer) -> std::size_t {
+        auto attempt_snprintf = [&](std::vector<char> *buffer) -> std::size_t {
             return std::snprintf(buffer != nullptr ? buffer->data() : nullptr,
                                  buffer != nullptr ? buffer->size() : 0,
                                  "#%02x%02x%02x",
