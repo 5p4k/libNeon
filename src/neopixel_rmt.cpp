@@ -54,6 +54,17 @@ namespace neo {
             }
     };
 
+    const char *to_string(controller c) {
+        switch (c) {
+            case controller::ws2811_400khz:
+                return "WS2811 (400kHz)";
+            case controller::ws2812_800khz:
+                return "WS2812 (800kHz)";
+            default:
+                return "UNKNOWN";
+        }
+    }
+
     rmt_config_t make_rmt_config(rmt_channel_t channel, gpio_num_t gpio) {
         rmt_config_t retval = rmt_config_neopixel_default;
         retval.channel = channel;

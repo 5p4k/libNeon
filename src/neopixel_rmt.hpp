@@ -16,6 +16,8 @@ namespace neo {
         ws2812_800khz
     };
 
+    [[nodiscard]] const char *to_string(controller c);
+
     class rmt_manager;
 
     [[nodiscard]] rmt_config_t make_rmt_config(rmt_channel_t channel, gpio_num_t gpio);
