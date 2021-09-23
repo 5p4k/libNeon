@@ -13,9 +13,9 @@
 namespace neo {
     gamma_table build_gamma_table(float gamma) {
         gamma_table table{};
-        for (std::uint8_t v = 0x00; v <= 0xff; ++v) {
-            const float linear_v = srgb_to_linear(v);
-            table[v] = std::uint8_t(std::clamp(std::round(std::pow(linear_v, gamma)), 0.f, 255.f));
+        for (std::size_t i = 0; i < table.size(); ++i) {
+            const float linear_v = srgb_to_linear(std::uint8_t(i));
+            table[i] = std::uint8_t(std::clamp(std::round(std::pow(linear_v, gamma)), 0.f, 255.f));
         }
         return table;
     }

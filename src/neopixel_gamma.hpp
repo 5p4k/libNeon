@@ -8,7 +8,7 @@
 #include <array>
 
 namespace neo {
-    using gamma_table = std::array<std::uint8_t, 0x100>;
+    using gamma_table = std::array<std::uint8_t, std::numeric_limits<std::uint8_t>::max() + 1>;
 
     /**
      * Builds a lookup gamma table from sRGB values to the corresponding gamma-corrected intensity values.
