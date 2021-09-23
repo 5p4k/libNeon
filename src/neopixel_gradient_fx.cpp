@@ -6,6 +6,9 @@
 #include <cmath>
 
 namespace neo {
+    /**
+     * @todo Make avaiable in neo::gradient
+     */
     std::vector<rgb> gradient_fx::sample(std::size_t n_leds, std::chrono::milliseconds time_since_start,
                                          std::vector<rgb> recycle_buffer, blending_method method) const {
         recycle_buffer.resize(n_leds);
