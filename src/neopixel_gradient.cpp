@@ -141,6 +141,24 @@ namespace neo {
         return s;
     }
 
+    void gradient::sample_uniform(float period, float offset, std::vector<rgb> &buffer, blending_method method) const {
+        for (std::size_t i = 0; i < buffer.size(); ++i) {
+            // Compute the correct time for this led
+            float t = offset + float(i) * period;
+            // Make sure it's in 0..1 range, handle also negative dts correctly
+            t -= std::floor(t);
+            assert(-std::numeric_limits<float>::epsilon() < t and t < std::nextafter(1.f, 2.f));
+            buffer[i] = sample(t, method);
+        }
+    }
+
+    std::vector<rgb> gradient::sample_uniform(float period, float offset, std::size_t num_samples,
+                                              std::vector<rgb> reuse_buffer, blending_method method) const {
+        reuse_buffer.resize(num_samples);
+        sample_uniform(period, offset, reuse_buffer, method);
+        return reuse_buffer;
+    }
+
     rgb gradient::sample(float t, blending_method method) const {
         if (not std::isfinite(t)) {
             t = 0.f;

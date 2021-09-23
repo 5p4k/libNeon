@@ -115,6 +115,12 @@ namespace neo {
 
         rgb sample(float t, blending_method = blend_linear) const;
 
+        void sample_uniform(float period, float offset, std::vector<rgb> &buffer,
+                            blending_method method = blend_linear) const;
+
+        std::vector<rgb> sample_uniform(float period, float offset, std::size_t num_samples,
+                                        std::vector<rgb> reuse_buffer = {}, blending_method method = blend_linear) const;
+
         [[nodiscard]] std::string to_string() const;
     };
 }
