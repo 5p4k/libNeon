@@ -3,6 +3,7 @@
 //
 
 #include "neopixel_gamma.hpp"
+#include "neopixel_color.hpp"
 #include <cmath>
 #include <algorithm>
 #include <map>
@@ -13,7 +14,8 @@ namespace neo {
     gamma_table build_gamma_table(float gamma) {
         gamma_table table{};
         for (std::uint8_t v = 0x00; v <= 0xff; ++v) {
-            table[v] = std::uint8_t(std::clamp(std::round(std::pow(float(v) / 255.f, gamma)), 0.f, 255.f));
+            const float linear_v = srgb_to_linear(v);
+            table[v] = std::uint8_t(std::clamp(std::round(std::pow(linear_v, gamma)), 0.f, 255.f));
         }
         return table;
     }
