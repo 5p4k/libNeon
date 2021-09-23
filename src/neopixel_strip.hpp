@@ -8,7 +8,9 @@
 #include <vector>
 #include <limits>
 #include <neopixel_rmt.hpp>
+#include <cmath>
 #include "neopixel_color.hpp"
+#include "neopixel_gamma.hpp"
 
 namespace neo {
 
@@ -36,15 +38,20 @@ namespace neo {
     class strip final : public transmittable_rgb_strip {
         rmt_item32_s _zero;
         rmt_item32_s _one;
+        float _gamma;
+        gamma_table const *_gamma_table;
         std::vector<Led> _pixels;
         std::vector<rmt_item32_s> _rmt_buffer;
     public:
 
+        static constexpr float default_gamma = 2.8f;
+        static constexpr float no_gamma = std::numeric_limits<float>::quiet_NaN();
+
         static_assert(std::has_unique_object_representations_v<Led>, "The Led class will be transmitted directly");
 
-        explicit strip(std::pair<rmt_item32_s, rmt_item32_s> zero_one);
+        explicit strip(std::pair<rmt_item32_s, rmt_item32_s> zero_one, float gamma = default_gamma);
 
-        strip(rmt_manager const &manager, controller chip);
+        strip(rmt_manager const &manager, controller chip, float gamma = default_gamma);
 
         [[nodiscard]] esp_err_t update(std::vector<rgb> const &colors, rmt_channel_t channel, bool wait_tx_done) override;
 
@@ -64,6 +71,12 @@ namespace neo {
         [[nodiscard]] inline std::size_t size() const override;
 
         [[nodiscard]] inline bool empty() const;
+
+        [[nodiscard]] inline float gamma() const;
+
+        [[nodiscard]] inline gamma_table const *get_gamma_table() const;
+
+        inline void set_gamma(float gamma);
 
         void clear();
 
@@ -177,16 +190,44 @@ namespace neo {
 namespace neo {
 
     template<class Led>
-    strip<Led>::strip(rmt_manager const &manager, controller chip) : _zero{}, _one{} {
+    strip<Led>::strip(rmt_manager const &manager, controller chip, float gamma) :
+            _zero{},
+            _one{},
+            _gamma{no_gamma},
+            _gamma_table{nullptr}
+    {
         auto[zero, one] = make_zero_one(manager, chip);
         _zero = zero;
         _one = one;
+        set_gamma(gamma);
     }
 
     template<class Led>
-    strip<Led>::strip(std::pair<rmt_item32_s, rmt_item32_s> zero_one) :
+    strip<Led>::strip(std::pair<rmt_item32_s, rmt_item32_s> zero_one, float gamma) :
             _zero{zero_one.first},
-            _one{zero_one.second} {}
+            _one{zero_one.second},
+            _gamma{no_gamma},
+            _gamma_table{nullptr}
+    {
+        set_gamma(gamma);
+    }
+
+
+    template<class Led>
+    float strip<Led>::gamma() const {
+        return _gamma;
+    }
+
+    template<class Led>
+    gamma_table const *strip<Led>::get_gamma_table() const {
+        return _gamma_table;
+    }
+
+    template<class Led>
+    void strip<Led>::set_gamma(float gamma) {
+        _gamma = gamma;
+        _gamma_table = std::isnan(gamma) ? nullptr : &lookup_gamma_table(gamma);
+    }
 
     template<class Led>
     std::size_t strip<Led>::size() const {
@@ -365,8 +406,12 @@ namespace neo {
     ref<Led> &ref<Led>::operator=(Led v) {
         Led &led = const_cast<Led &>(cref<Led>::_cref);
         led = v;
+        // Gamma-correct v if necessary
+        if (const auto *table = _neopixel.get_gamma_table(); table != nullptr) {
+            v = v.with_gamma(*table);
+        }
         // Make sure to copy the byte representation
-        populate(_repr_it, led, _neopixel.zero(), _neopixel.one());
+        populate(_repr_it, v, _neopixel.zero(), _neopixel.one());
         return *this;
     }
 

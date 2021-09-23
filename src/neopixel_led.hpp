@@ -52,6 +52,8 @@ namespace neo {
 
         [[nodiscard]] inline rgb rgb_color() const;
         [[nodiscard]] inline hsv hsv_color() const;
+
+        [[nodiscard]] inline led with_gamma(gamma_table const &table) const;
     };
 
     using grb_led = led<led_channel::green, led_channel::red, led_channel::blue>;
@@ -112,6 +114,15 @@ namespace neo {
     template <led_channel ...Channels>
     hsv led<Channels...>::hsv_color() const {
         return rgb_color().to_hsv();
+    }
+
+    template <led_channel ...Channels>
+    led<Channels...> led<Channels...>::with_gamma(gamma_table const &table) const {
+        led gamma_corrected_led = *this;
+        gamma_corrected_led.set<led_channel::red>(table[get<led_channel::red>()]);
+        gamma_corrected_led.set<led_channel::green>(table[get<led_channel::green>()]);
+        gamma_corrected_led.set<led_channel::blue>(table[get<led_channel::blue>()]);
+        return gamma_corrected_led;
     }
 
 
