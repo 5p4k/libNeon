@@ -141,7 +141,7 @@ namespace neo {
         return *this;
     }
 
-    rgb &rgb::blend(const rgb &target, float factor) {
+    rgb &rgb::blend(rgb target, float factor) {
         factor = std::clamp(factor, 0.f, 1.f);
         r = linear_to_srgb(srgb_to_linear(r) * (1.f - factor) + srgb_to_linear(target.r) * factor);
         g = linear_to_srgb(srgb_to_linear(g) * (1.f - factor) + srgb_to_linear(target.g) * factor);

@@ -57,11 +57,11 @@ namespace neo {
         rgb &shift(maybe_update<signed> dr, maybe_update<signed> dg, maybe_update<signed> db);
         [[nodiscard]] inline rgb shift(maybe_update<signed> dr, maybe_update<signed> dg, maybe_update<signed> db) const;
 
-        inline rgb &shift(rgb const &delta, bool negate = false);
-        [[nodiscard]] inline rgb shift(rgb const &delta, bool negate = false) const;
+        inline rgb &shift(rgb delta, bool negate = false);
+        [[nodiscard]] inline rgb shift(rgb delta, bool negate = false) const;
 
-        rgb &blend(rgb const &target, float factor);
-        [[nodiscard]] inline rgb blend(rgb const &target, float factor) const;
+        rgb &blend(rgb target, float factor);
+        [[nodiscard]] inline rgb blend(rgb target, float factor) const;
 
         [[nodiscard]] hsv to_hsv() const;
 
@@ -91,8 +91,8 @@ namespace neo {
         hsv &shift(maybe_update<float> dh, maybe_update<float> ds, maybe_update<float> dv);
         [[nodiscard]] inline hsv shift(maybe_update<float> dh, maybe_update<float> ds, maybe_update<float> dv) const;
 
-        inline hsv &shift(hsv const &delta, bool negate = false);
-        [[nodiscard]] inline hsv shift(hsv const &delta, bool negate = false) const;
+        inline hsv &shift(hsv delta, bool negate = false);
+        [[nodiscard]] inline hsv shift(hsv delta, bool negate = false) const;
 
         [[nodiscard]] rgb to_rgb() const;
     };
@@ -143,11 +143,11 @@ namespace neo {
         }
     }
 
-    rgb &rgb::shift(const rgb &delta, bool negate) {
+    rgb &rgb::shift(rgb delta, bool negate) {
         return negate ? shift(-delta.r, -delta.g, -delta.b) : shift(delta.r, delta.g, delta.b);
     }
 
-    hsv &hsv::shift(hsv const &delta, bool negate) {
+    hsv &hsv::shift(hsv delta, bool negate) {
         return negate ? shift(-delta.h, -delta.s, -delta.v) : shift(delta.h, delta.s, delta.v);
     }
 
@@ -163,7 +163,7 @@ namespace neo {
         return retval;
     }
 
-    rgb rgb::shift(rgb const &delta, bool negate) const {
+    rgb rgb::shift(rgb delta, bool negate) const {
         rgb retval = *this;
         retval.shift(delta, negate);
         return retval;
@@ -181,13 +181,13 @@ namespace neo {
         return retval;
     }
 
-    hsv hsv::shift(hsv const &delta, bool negate) const {
+    hsv hsv::shift(hsv delta, bool negate) const {
         hsv retval = *this;
         retval.shift(delta, negate);
         return retval;
     }
 
-    rgb rgb::blend(rgb const &target, float factor) const {
+    rgb rgb::blend(rgb target, float factor) const {
         rgb retval = *this;
         retval.blend(target, factor);
         return retval;

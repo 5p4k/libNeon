@@ -93,19 +93,19 @@ namespace neo {
     }
 
 
-    rgb blend_linear(rgb const &l, rgb const &r, float t) {
+    rgb blend_linear(rgb l, rgb r, float t) {
         return l.blend(r, t);
     }
 
-    rgb blend_round_down(rgb const &l, rgb const &, float) {
+    rgb blend_round_down(rgb l, rgb , float) {
         return l;
     }
 
-    rgb blend_round_up(rgb const &, rgb const &r, float) {
+    rgb blend_round_up(rgb , rgb r, float) {
         return r;
     }
 
-    rgb blend_nearest_neighbor(rgb const &l, rgb const &r, float t) {
+    rgb blend_nearest_neighbor(rgb l, rgb r, float t) {
         return safe_less{}(t, 0.5f) ? l : r;
     }
 

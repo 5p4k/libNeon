@@ -34,13 +34,7 @@ namespace neo {
     public:
         led() = default;
 
-        /**
-         *
-         * @tparam Arg0 Dirty trick to match only >= 1 parameter packs, so that we are sure to be default constructible
-         * @tparam Args `(Arg0, Args...)` together can construct @ref hsv or @ref rgb
-         */
-        template <class Arg0, class ...Args>
-        inline led(Arg0 && arg0, Args &&...args);
+        inline led(rgb c, gamma_table const *table);
 
         template <led_channel Channel>
         void set(std::uint8_t v);
@@ -50,10 +44,13 @@ namespace neo {
         [[nodiscard]] inline std::uint8_t get() const;
         [[nodiscard]] inline std::uint8_t get(led_channel chn) const;
 
-        [[nodiscard]] inline rgb rgb_color() const;
-        [[nodiscard]] inline hsv hsv_color() const;
+        void set_color(rgb c, gamma_table const *table);
 
-        [[nodiscard]] inline led with_gamma(gamma_table const &table) const;
+        /**
+         * @note Very slow because it does inverse gamma table lookup. Also not guaranteed to invert @ref set_color,
+         * because a discretized gamma function is not bijective.
+         */
+        [[nodiscard]] rgb get_color(gamma_table const *table) const;
     };
 
     using grb_led = led<led_channel::green, led_channel::red, led_channel::blue>;
@@ -107,43 +104,36 @@ namespace neo {
     }
 
     template <led_channel ...Channels>
-    rgb led<Channels...>::rgb_color() const {
-        return {get<led_channel::red>(), get<led_channel::green>(), get<led_channel::blue>()};
-    }
-
-    template <led_channel ...Channels>
-    hsv led<Channels...>::hsv_color() const {
-        return rgb_color().to_hsv();
-    }
-
-    template <led_channel ...Channels>
-    led<Channels...> led<Channels...>::with_gamma(gamma_table const &table) const {
-        led gamma_corrected_led = *this;
-        gamma_corrected_led.set<led_channel::red>(table[get<led_channel::red>()]);
-        gamma_corrected_led.set<led_channel::green>(table[get<led_channel::green>()]);
-        gamma_corrected_led.set<led_channel::blue>(table[get<led_channel::blue>()]);
-        return gamma_corrected_led;
-    }
-
-
-    template <led_channel ...Channels>
-    template <class Arg0, class ...Args>
-    led<Channels...>::led(Arg0 &&arg0, Args &&...args) : led{} {
-        if constexpr(std::is_constructible_v<rgb, Arg0, Args...>) {
-            rgb color(std::forward<Arg0>(arg0), std::forward<Args>(args)...);
-            set<led_channel::red>(color.r);
-            set<led_channel::green>(color.g);
-            set<led_channel::blue>(color.b);
-        } else if constexpr(std::is_constructible_v<hsv, Arg0, Args...>) {
-            rgb color = hsv(std::forward<Arg0>(arg0), std::forward<Args>(args)...).to_rgb();
-            set<led_channel::red>(color.r);
-            set<led_channel::green>(color.g);
-            set<led_channel::blue>(color.b);
+    void led<Channels...>::set_color(rgb c, const gamma_table *table) {
+        if (table != nullptr) {
+            set<led_channel::red>((*table)[c.r]);
+            set<led_channel::green>((*table)[c.g]);
+            set<led_channel::blue>((*table)[c.b]);
         } else {
-            static_assert(std::is_constructible_v<rgb, Args...> or std::is_constructible_v<hsv, Args...>,
-                          "I cannot construct neither neo::rgb nor neo::hsv with these arguments.");
+            set<led_channel::red>(c.r);
+            set<led_channel::green>(c.g);
+            set<led_channel::blue>(c.b);
         }
     }
+
+    template <led_channel ...Channels>
+    led<Channels...>::led(rgb c, gamma_table const *table) : led{} {
+        set_color(c, table);
+    }
+
+    template <led_channel ...Channels>
+    rgb led<Channels...>::get_color(gamma_table const *table) const {
+        if (table != nullptr) {
+            return {table->reverse_lookup(get<led_channel::red>()),
+                    table->reverse_lookup(get<led_channel::green>()),
+                    table->reverse_lookup(get<led_channel::blue>())};
+        } else {
+            return {get<led_channel::red>(),
+                    get<led_channel::green>(),
+                    get<led_channel::blue>()};
+        }
+    }
+
 }
 
 #endif //PICOSKATE_NEOPIXEL_LED_HPP

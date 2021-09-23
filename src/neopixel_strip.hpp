@@ -165,24 +165,33 @@ namespace neo {
     template<class Led>
     class cref {
     protected:
+        strip<Led> const &_strip;
         Led const &_cref;
     public:
-        explicit cref(Led const &cref);
+        cref(strip<Led> const &neo, Led const &cref);
 
         [[nodiscard]] inline operator Led() const;
+
+        [[nodiscard]] rgb get_color() const;
     };
 
 
     template<class Led>
     class ref : public cref<Led> {
-        strip<Led> const &_neopixel;
         std::vector<rmt_item32_s>::iterator _repr_it;
+        using cref<Led>::_strip;
     public:
-        explicit ref(Led &ref, std::vector<rmt_item32_s>::iterator repr_it, strip<Led> const &neo);
+        explicit ref(strip<Led> const &neo, Led &ref, std::vector<rmt_item32_s>::iterator repr_it);
 
         using cref<Led>::operator Led;
+        using cref<Led>::get_color;
+
+        [[nodiscard]] inline operator Led &();
+
+        void set_color(rgb c);
 
         ref &operator=(Led v);
+        inline ref &operator=(rgb c);
     };
 
 }
@@ -226,7 +235,7 @@ namespace neo {
     template<class Led>
     void strip<Led>::set_gamma(float gamma) {
         _gamma = gamma;
-        _gamma_table = std::isnan(gamma) ? nullptr : &lookup_gamma_table(gamma);
+        _gamma_table = std::isnan(gamma) ? nullptr : &get_cached_gamma_table(gamma);
     }
 
     template<class Led>
@@ -375,12 +384,12 @@ namespace neo {
     template<class Led>
     ref<Led> strip<Led>::operator[](std::size_t i) {
         using diff_t = typename decltype(_rmt_buffer)::difference_type;
-        return ref{_pixels.at(i), std::begin(_rmt_buffer) + diff_t(i * 8 * sizeof(Led)), *this};
+        return ref{*this, _pixels.at(i), std::begin(_rmt_buffer) + diff_t(i * 8 * sizeof(Led))};
     }
 
     template<class Led>
     cref<Led> strip<Led>::operator[](std::size_t i) const {
-        return cref{_pixels.at(i)};
+        return cref{*this, _pixels.at(i)};
     }
 
     template<class Led>
@@ -394,24 +403,43 @@ namespace neo {
     }
 
     template<class Led>
-    cref<Led>::cref(Led const &cref) : _cref{cref} {}
+    rgb cref<Led>::get_color() const {
+        return _cref.get_color(_strip.get_gamma_table());
+    }
 
     template<class Led>
-    ref<Led>::ref(Led &ref, std::vector<rmt_item32_s>::iterator repr_it, strip<Led> const &neo) :
-            cref<Led>{ref},
-            _neopixel{neo},
+    cref<Led>::cref(strip<Led> const &neo, Led const &cref) : _strip{neo}, _cref{cref} {}
+
+    template<class Led>
+    ref<Led>::ref(strip<Led> const &neo, Led &ref, std::vector<rmt_item32_s>::iterator repr_it) :
+            cref<Led>{neo, ref},
             _repr_it{repr_it} {}
+
+
+
+    template<class Led>
+    ref<Led>::operator Led &() {
+        return const_cast<Led &>(cref<Led>::_cref);
+    }
+
+    template<class Led>
+    void ref<Led>::set_color(rgb c) {
+        Led &led = *this;
+        led.set_color(c, _strip.get_gamma_table());
+    }
+
+    template<class Led>
+    ref<Led> &ref<Led>::operator=(rgb c) {
+        set_color(c);
+        return *this;
+    }
 
     template<class Led>
     ref<Led> &ref<Led>::operator=(Led v) {
-        Led &led = const_cast<Led &>(cref<Led>::_cref);
+        Led &led = *this;
         led = v;
-        // Gamma-correct v if necessary
-        if (const auto *table = _neopixel.get_gamma_table(); table != nullptr) {
-            v = v.with_gamma(*table);
-        }
         // Make sure to copy the byte representation
-        populate(_repr_it, v, _neopixel.zero(), _neopixel.one());
+        populate(_repr_it, v, _strip.zero(), _strip.one());
         return *this;
     }
 
@@ -451,7 +479,7 @@ namespace neo {
     template <class Led>
     esp_err_t strip<Led>::update(std::vector<rgb> const &colors, rmt_channel_t channel, bool wait_tx_done) {
         if (size() != colors.size()) {
-            resize(colors.size(), rgb{0, 0, 0});
+            resize(colors.size(), Led{});
         }
         std::copy(std::begin(colors), std::end(colors), std::begin(*this));
         return transmit(channel, wait_tx_done);
