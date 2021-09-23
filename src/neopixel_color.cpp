@@ -9,18 +9,21 @@
 namespace neo {
 
     namespace {
-        std::uint8_t round_float_to_byte(float f) {
-            return std::uint8_t(std::round(std::clamp(f, 0.f, 255.f)));
-        }
-
-        std::uint8_t unit_float_to_byte(float f) {
-            return round_float_to_byte(255.f * f);
-        }
-
-        std::array<std::uint8_t, 3> unit_float_to_byte(std::array<float, 3> f) {
-            return {unit_float_to_byte(f[0]), unit_float_to_byte(f[1]), unit_float_to_byte(f[2])};
+        std::array<std::uint8_t, 3> f3_linear_to_srgb(std::array<float, 3> f) {
+            return {linear_to_srgb(f[0]), linear_to_srgb(f[1]), linear_to_srgb(f[2])};
         }
     }
+
+    float srgb_to_linear(std::uint8_t v) {
+        const float f = float(v) / 255.f;
+        return f <= 0.04045f ? f / 12.92f : std::pow((f + 0.055f) / 1.055f, 2.4f);
+    }
+
+    std::uint8_t linear_to_srgb(float v) {
+        v = v <= 0.0031308f ? v * 12.92f : 1.055f * std::pow(v, 1.f / 2.4f) - 0.055f;
+        return std::uint8_t(std::round(std::clamp(v, 0.f, 255.f)));
+    }
+
 
     std::string rgb::to_string() const {
         // Do not use stringstream, it requires tons of memory
@@ -37,35 +40,47 @@ namespace neo {
         return std::string{buffer.data()};
     }
 
+
+    std::array<float, 3> rgb::to_linear_rgb() const {
+        return {srgb_to_linear(r), srgb_to_linear(g), srgb_to_linear(b)};
+    }
+
+    rgb rgb::from_linear_rgb(std::array<float, 3> const &linear_rgb) {
+        return {linear_to_srgb(linear_rgb[0]), linear_to_srgb(linear_rgb[1]), linear_to_srgb(linear_rgb[2])};
+    }
+
     hsv rgb::to_hsv() const {
         static constexpr auto hue_scale = 1.f / 6.f;
-        const std::uint8_t value = std::max(r, std::max(g, b));
-        const std::uint8_t min_c = std::min(r, std::min(g, b));
-        const std::uint8_t chroma = value - min_c;
+        const auto [lin_r, lin_g, lin_b] = to_linear_rgb();
 
-        const float hue = [&]() -> float {
-            if (chroma == 0) {
+        const float value = std::max(lin_r, std::max(lin_g, lin_b));
+        const float min_c = std::min(lin_r, std::min(lin_g, lin_b));
+        const float chroma = value - min_c;
+
+        // Note: explicitly copy structured bindings
+        const float hue = [&, lin_r = lin_r, lin_g = lin_g, lin_b = lin_b]() -> float {
+            if (chroma < std::numeric_limits<float>::epsilon()) {
                 return 0.f;
-            } else if (value == r) {
-                return hue_scale * float(g - b) / float(chroma);
-            } else if (value == g) {
-                return hue_scale * (2.f + float(b - r) / float(chroma));
-            } else if (value == b) {
-                return hue_scale * (4.f + float(r - g) / float(chroma));
+            } else if (value == lin_r) {
+                return hue_scale * float(lin_g - lin_b) / float(chroma);
+            } else if (value == lin_g) {
+                return hue_scale * (2.f + float(lin_b - lin_r) / float(chroma));
+            } else if (value == lin_b) {
+                return hue_scale * (4.f + float(lin_r - lin_g) / float(chroma));
             }
             return 0.f;
         }();
 
-        const float saturation = (value == 0 ? 0.f : float(chroma) / float(value));
+        const float saturation = (value < std::numeric_limits<float>::epsilon() ? 0.f : chroma / value);
 
-        return {std::fmod(hue + 1.f, 1.f), saturation, float(value) / 255.f};
+        return {std::fmod(hue + 1.f, 1.f), saturation, value};
     }
 
     rgb hsv::to_rgb() const {
         const float s_ = std::clamp(s, 0.f, 1.f);
         const float v_ = std::clamp(v, 0.f, 1.f);
         if (s_ < std::numeric_limits<float>::epsilon()) {
-            const std::uint8_t gray = unit_float_to_byte(v_);
+            const std::uint8_t gray = linear_to_srgb(v_);
             return {gray, gray, gray};
         }
         // Remap in 0...6
@@ -76,17 +91,17 @@ namespace neo {
         const float x = v_ * (1.f - s_ * (hue_block % 2 == 0 ? 1.f - h_ + hue_floor : h_ - hue_floor));
         switch (hue_block) {
             case 0:
-                return unit_float_to_byte({v_, x, m});
+                return f3_linear_to_srgb({v_, x, m});
             case 1:
-                return unit_float_to_byte({x, v_, m});
+                return f3_linear_to_srgb({x, v_, m});
             case 2:
-                return unit_float_to_byte({m, v_, x});
+                return f3_linear_to_srgb({m, v_, x});
             case 3:
-                return unit_float_to_byte({m, x, v_});
+                return f3_linear_to_srgb({m, x, v_});
             case 4:
-                return unit_float_to_byte({x, m, v_});
+                return f3_linear_to_srgb({x, m, v_});
             default:
-                return unit_float_to_byte({v_, m, x});
+                return f3_linear_to_srgb({v_, m, x});
         }
     }
 
@@ -128,9 +143,9 @@ namespace neo {
 
     rgb &rgb::blend(const rgb &target, float factor) {
         factor = std::clamp(factor, 0.f, 1.f);
-        r = round_float_to_byte(float(r) * (1.f - factor) + float(target.r) * factor);
-        g = round_float_to_byte(float(g) * (1.f - factor) + float(target.g) * factor);
-        b = round_float_to_byte(float(b) * (1.f - factor) + float(target.b) * factor);
+        r = linear_to_srgb(srgb_to_linear(r) * (1.f - factor) + srgb_to_linear(target.r) * factor);
+        g = linear_to_srgb(srgb_to_linear(g) * (1.f - factor) + srgb_to_linear(target.g) * factor);
+        b = linear_to_srgb(srgb_to_linear(b) * (1.f - factor) + srgb_to_linear(target.b) * factor);
         return *this;
     }
 

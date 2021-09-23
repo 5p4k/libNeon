@@ -32,6 +32,12 @@ namespace neo {
         void add(U &target) const;
     };
 
+    [[nodiscard]] float srgb_to_linear(std::uint8_t v);
+    [[nodiscard]] std::uint8_t linear_to_srgb(float v);
+
+    /**
+     * The values are expressed in sRGB color space.
+     */
     struct rgb {
         std::uint8_t r = 0;
         std::uint8_t g = 0;
@@ -58,6 +64,9 @@ namespace neo {
         [[nodiscard]] inline rgb blend(rgb const &target, float factor) const;
 
         [[nodiscard]] hsv to_hsv() const;
+
+        [[nodiscard]] std::array<float, 3> to_linear_rgb() const;
+        [[nodiscard]] static rgb from_linear_rgb(std::array<float, 3> const &linear_rgb);
 
         [[nodiscard]] std::string to_string() const;
 
