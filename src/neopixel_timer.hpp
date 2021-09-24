@@ -13,16 +13,15 @@
 #include <string>
 #include <chrono>
 #include <functional>
+#include "mlab_unique_tracker.hpp"
 
 namespace neo {
 
-
     namespace {
         using namespace std::chrono_literals;
-
     }
 
-    class generic_timer {
+    class generic_timer : public mlab::uniquely_tracked {
 
         /**
          * We have the timer in ms, but we cannot specify a sufficiently large divider
@@ -48,9 +47,9 @@ namespace neo {
         std::chrono::milliseconds _period = 0ms;
         bool _active = false;
 
-        static bool IRAM_ATTR isr_callback(void *arg);
+        static bool IRAM_ATTR isr_callback(void *tracker);
 
-        static void cbk_task_body(void *arg);
+        static void cbk_task_body(void *tracker);
 
         [[nodiscard]] static std::uint64_t get_alarm_value(std::chrono::milliseconds period);
 

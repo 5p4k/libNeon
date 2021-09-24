@@ -36,13 +36,9 @@ namespace neo {
     }
 
     generic_timer &generic_timer::operator=(generic_timer &&t) noexcept {
-        // We have to stop the tasks and restart when we move because we will likely change the "this" argument.
-        if (is_valid_timer()) {
-            teardown_callbacks();
-        }
-        if (t.is_valid_timer()) {
-            t.teardown_callbacks();
-        }
+        // Signal that a move operation is in place. This RAII object upon destruction will swap the content of
+        // the corresponding trackers.
+        auto hold_move = t.swap(*this);
         std::swap(_cfg, t._cfg);
         std::swap(_group, t._group);
         std::swap(_idx, t._idx);
@@ -51,12 +47,6 @@ namespace neo {
         std::swap(_cbk_task, t._cbk_task);
         std::swap(_period, t._period);
         std::swap(_active, t._active);
-        if (t.is_valid_timer()) {
-            t.setup_callbacks();
-        }
-        if (is_valid_timer()) {
-            setup_callbacks();
-        }
         return *this;
     }
 
@@ -64,8 +54,8 @@ namespace neo {
         *this = std::move(t);
     }
 
-    void generic_timer::cbk_task_body(void *arg) {
-        if (auto *instance = reinterpret_cast<generic_timer *>(arg); instance != nullptr) {
+    void generic_timer::cbk_task_body(void *tracker) {
+        if (auto *instance = mlab::uniquely_tracked::track<generic_timer>(tracker); instance != nullptr) {
             ESP_LOGD("TIMER", "Timer %d:%d running on core %d.", instance->group(), instance->index(), xPortGetCoreID());
             while (instance->_cbk_task != nullptr /* it's a me :D */) {
                 if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY) != 0) {
@@ -122,8 +112,8 @@ namespace neo {
         }
     }
 
-    bool generic_timer::isr_callback(void *arg) {
-        if (auto *instance = reinterpret_cast<generic_timer *>(arg); instance != nullptr) {
+    bool generic_timer::isr_callback(void *tracker) {
+        if (auto *instance = mlab::uniquely_tracked::track<generic_timer>(tracker); instance != nullptr) {
             BaseType_t high_task_awoken = pdFALSE;
             vTaskNotifyGiveFromISR(instance->_cbk_task, &high_task_awoken);
             return high_task_awoken == pdTRUE; // Return whether we need to yield at the end of ISR
