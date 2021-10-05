@@ -59,6 +59,18 @@ namespace neo {
             ESP_LOGD("TIMER", "Timer %d:%d running on core %d.", instance->group(), instance->index(), xPortGetCoreID());
             while (instance->_cbk_task != nullptr /* it's a me :D */) {
                 if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY) != 0) {
+                    // Update instance pointer
+                    auto *moved_instance = mlab::uniquely_tracked::track<generic_timer>(tracker);
+                    if (moved_instance != instance) {
+                        if (moved_instance == nullptr) {
+                            ESP_LOGW("TIMER", "Old instance %p was moved and disappeared?", instance);
+                            break;
+                        } else {
+                            ESP_LOGD("TIMER", "Old instance %p was moved and now is at %p.", instance, moved_instance);
+                        }
+                        // Replace before calling
+                        instance = moved_instance;
+                    }
                     instance->_cbk(*instance);
                 }
             }
