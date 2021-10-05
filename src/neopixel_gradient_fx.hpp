@@ -16,7 +16,7 @@ namespace neo {
     }
 
     class gradient_fx {
-        neo::gradient const &_gradient;
+        neo::gradient const *_gradient;
         std::chrono::milliseconds _duration;
         float _repeats;
     public:
@@ -37,7 +37,7 @@ namespace neo {
 
 namespace neo {
     gradient_fx::gradient_fx(const neo::gradient &g, std::chrono::milliseconds duration, float repeats) :
-        _gradient{g},
+        _gradient{&g},
         _duration{duration},
         _repeats{repeats}
     {}
@@ -51,7 +51,7 @@ namespace neo {
     }
 
     const neo::gradient & gradient_fx::gradient() const {
-        return _gradient;
+        return *_gradient;
     }
 
     void gradient_fx::set_duration(std::chrono::milliseconds d) {
