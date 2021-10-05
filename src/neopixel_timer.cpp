@@ -72,7 +72,7 @@ namespace neo {
             return;
         }
         // Setup first the callback to the timer
-        ESP_ERROR_CHECK(timer_isr_callback_add(group(), index(), &isr_callback, this, 0));
+        ESP_ERROR_CHECK(timer_isr_callback_add(group(), index(), &isr_callback, tracker(), 0));
         // Setup a pinned task that will call the callback, leaving the ISR callback nice and free
         const auto res = xTaskCreatePinnedToCore(
                 &cbk_task_body,
@@ -118,7 +118,7 @@ namespace neo {
             vTaskNotifyGiveFromISR(instance->_cbk_task, &high_task_awoken);
             return high_task_awoken == pdTRUE; // Return whether we need to yield at the end of ISR
         }
-        return pdFALSE;
+        return false;
     }
 
     std::uint64_t generic_timer::get_alarm_value(std::chrono::milliseconds period) {
