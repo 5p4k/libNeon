@@ -78,7 +78,7 @@ namespace neo {
                 &cbk_task_body,
                 timer_desc[group()][index()],
                 CONFIG_ESP_TIMER_TASK_STACK_SIZE,
-                this,
+                tracker(),
                 3 | portPRIVILEGE_BIT,
                 &_cbk_task,
                 core_affinity());
