@@ -21,7 +21,7 @@ namespace neo {
 
     std::uint8_t linear_to_srgb(float v) {
         v = v <= 0.0031308f ? v * 12.92f : 1.055f * std::pow(v, 1.f / 2.4f) - 0.055f;
-        return std::uint8_t(std::round(std::clamp(v, 0.f, 255.f)));
+        return std::uint8_t(std::round(std::clamp(v * 255.f, 0.f, 255.f)));
     }
 
 
