@@ -5,6 +5,7 @@
 #include "neopixel_gradient_fx.hpp"
 #include "skate_data.hpp"
 #include "mlab_mutex.hpp"
+#include "mlab_float_io.hpp"
 #include <cmath>
 
 namespace neo {
@@ -78,6 +79,6 @@ namespace neo {
 namespace mlab {
 
     mlab::bin_stream &operator>>(mlab::bin_stream &s, neo::gradient_fx_config &g_fx_cfg) {
-        return s >> g_fx_cfg.gradient >> g_fx_cfg.repeats >> lsb32 >> g_fx_cfg.duration_ms;
+        return s >> g_fx_cfg.gradient >> float_lsb >> g_fx_cfg.repeats >> lsb32 >> g_fx_cfg.duration_ms;
     }
 }

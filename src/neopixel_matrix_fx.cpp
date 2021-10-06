@@ -6,6 +6,7 @@
 #include <algorithm>
 #include "mlab_mutex.hpp"
 #include "skate_data.hpp"
+#include "mlab_float_io.hpp"
 
 namespace neo {
 
@@ -199,7 +200,7 @@ namespace mlab {
         m_fx_cfg.matrix.resize(matrix_size);
         s.read(std::begin(m_fx_cfg.matrix), m_fx_cfg.matrix.size());
         s >> m_fx_cfg.width;
-        s >> m_fx_cfg.repeats_x;
+        s >> float_lsb >> m_fx_cfg.repeats_x;
         s >> lsb32 >> m_fx_cfg.duration_x_ms;
         s >> lsb32 >> m_fx_cfg.duration_y_ms;
         return s;

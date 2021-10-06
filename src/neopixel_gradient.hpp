@@ -7,6 +7,7 @@
 
 #include "neopixel_color.hpp"
 #include <vector>
+#include "bin_data.hpp"
 
 namespace neo {
     using blending_method = rgb (&)(rgb l, rgb r, float t);
@@ -125,6 +126,12 @@ namespace neo {
     };
 }
 
+namespace mlab {
+
+    bin_data &operator<<(bin_data &o, neo::gradient const &g);
+
+    bin_stream &operator>>(bin_stream &i, neo::gradient &g);
+}
 
 namespace neo {
     bool gradient::empty() const {

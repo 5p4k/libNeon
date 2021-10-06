@@ -211,3 +211,42 @@ namespace neo {
         normalize();
     }
 }
+
+namespace mlab {
+
+    namespace {
+        [[nodiscard]] std::uint8_t unit_float_to_byte(float f) {
+            return std::uint8_t(255.f * std::clamp(f, 0.f, 1.f));
+        }
+        [[nodiscard]] float byte_to_unit_float(std::uint8_t b) {
+            return float(b) / 255.f;
+        }
+    }
+
+    bin_data &operator<<(bin_data &o, neo::gradient const &g) {
+        o << std::uint8_t(g.size());
+        for (const auto entry : g) {
+            o << entry.color().r << entry.color().g << entry.color().b << unit_float_to_byte(entry.time());
+        }
+        return o;
+    }
+
+    bin_stream &operator>>(bin_stream &i, neo::gradient &g) {
+        std::uint8_t n_entries = 0;
+        i >> n_entries;
+        if (not i.bad() and i.remaining() >= n_entries * 4) {
+            std::vector<neo::gradient_entry> entries;
+            entries.reserve(n_entries);
+            for (std::size_t j = 0; j < n_entries; ++j) {
+                neo::rgb c;
+                std::uint8_t t = 0;
+                i >> c.r >> c.g >> c.b >> t;
+                entries.emplace_back(byte_to_unit_float(t), c);
+            }
+            g = neo::gradient(std::move(entries));
+        } else {
+            i.set_bad();
+        }
+        return i;
+    }
+}
