@@ -25,10 +25,15 @@ namespace neo {
     [[nodiscard]] std::pair<rmt_item32_s, rmt_item32_s> make_zero_one(rmt_manager const &manager, controller chip);
 
     class rmt_manager {
-        rmt_channel_t _channel;
-        bool _manage_driver;
+        rmt_channel_t _channel = RMT_CHANNEL_MAX;
+        bool _manage_driver = false;
     public:
+        rmt_manager() = default;
         rmt_manager(rmt_config_t config, bool manage_driver);
+        rmt_manager(rmt_manager const &) = delete;
+        rmt_manager &operator=(rmt_manager const &) = delete;
+        rmt_manager(rmt_manager &&) noexcept = default;
+        rmt_manager &operator=(rmt_manager &&) noexcept = default;
 
         [[nodiscard]] inline operator rmt_channel_t() const;
 
