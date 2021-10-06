@@ -37,6 +37,21 @@ namespace neo {
     }
 
 
+    std::vector<rgb> gradient_fx::render_frame(transmittable_rgb_strip &strip, rmt_channel_t channel, std::chrono::milliseconds elapsed,
+                                  std::vector<rgb> recycle_buffer, blending_method method) const
+    {
+        // Quickly try to lock, if fails, just drop frame
+        mlab::scoped_try_lock lock{_gradient_mutex};
+        if (lock) {
+            // Use lambda initialization syntax and mutability to always recycle the buffer
+            recycle_buffer = sample(strip.size(), elapsed, std::move(recycle_buffer), method);
+            ESP_ERROR_CHECK_WITHOUT_ABORT(strip.update(recycle_buffer, channel, false));
+        } else {
+            ESP_LOGW("NEO", "Dropping frame due to locked gradient fx operation");
+        }
+        return recycle_buffer;
+    }
+
     std::function<void(std::chrono::milliseconds)> gradient_fx::make_steady_timer_callback(
             transmittable_rgb_strip &strip, rmt_channel_t channel, blending_method method) const
     {
@@ -45,15 +60,7 @@ namespace neo {
         {
             // Do not capture this, to enable movement of the object
             if (auto *g_fx = mlab::uniquely_tracked::track<gradient_fx>(tracker); g_fx != nullptr) {
-                // Quickly try to lock, if fails, just drop frame
-                mlab::scoped_try_lock lock{g_fx->_gradient_mutex};
-                if (lock) {
-                    // Use lambda initialization syntax and mutability to always recycle the buffer
-                    buffer = g_fx->sample(strip.size(), elapsed, std::move(buffer), method);
-                    ESP_ERROR_CHECK_WITHOUT_ABORT(strip.update(buffer, channel, false));
-                } else {
-                    ESP_LOGW("NEO", "Dropping frame due to locked gradient fx operation");
-                }
+                buffer = g_fx->render_frame(strip, channel, elapsed, std::move(buffer), method);
             } else {
                 ESP_LOGE("NEO", "Unable to track gradient fx object.");
             }

@@ -28,6 +28,8 @@ namespace neo {
 
         [[nodiscard]] std::function<void(std::chrono::milliseconds)>
         make_steady_timer_callback(transmittable_rgb_strip &strip, rmt_channel_t channel) const;
+
+        void render_frame(transmittable_rgb_strip &strip, rmt_channel_t channel) const;
     };
 
 
