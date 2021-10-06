@@ -14,20 +14,19 @@ namespace mlab {
                 case neo::fx_type::solid: {
                     neo::solid_fx_config s_cfg{};
                     s >> s_cfg;
-                    // TODO make sure this can be wrapped properly
-                    fx_cfg = neo::any_fx_config_data<neo::fx_type::solid>{std::move(s_cfg)};
+                    fx_cfg = neo::any_fx_config_data<neo::fx_type::solid>{std::forward<neo::solid_fx_config>(s_cfg)};
                 }
                     break;
                 case neo::fx_type::gradient: {
                     neo::gradient_fx_config g_cfg{};
                     s >> g_cfg;
-                    fx_cfg = neo::any_fx_config_data<neo::fx_type::gradient>{std::move(g_cfg)};
+                    fx_cfg = neo::any_fx_config_data<neo::fx_type::gradient>{std::forward<neo::gradient_fx_config>(g_cfg)};
                 }
                     break;
                 case neo::fx_type::matrix: {
                     neo::matrix_fx_config m_cfg{};
                     s >> m_cfg;
-                    fx_cfg = neo::any_fx_config_data<neo::fx_type::matrix>{std::move(m_cfg)};
+                    fx_cfg = neo::any_fx_config_data<neo::fx_type::matrix>{std::forward<neo::matrix_fx_config>(m_cfg)};
                 }
                     break;
             }

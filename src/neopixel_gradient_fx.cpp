@@ -4,6 +4,7 @@
 
 #include "neopixel_gradient_fx.hpp"
 #include "skate_data.hpp"
+#include "mlab_mutex.hpp"
 #include <cmath>
 
 namespace neo {
@@ -16,7 +17,8 @@ namespace neo {
         // Compute the time increment for each led
         const float dt = repeats() / float(n_leds);
 
-        return gradient().sample_uniform(dt, t0, n_leds, std::move(recycle_buffer), method);
+        std::scoped_lock lock{_gradient_mutex};
+        return _gradient.sample_uniform(dt, t0, n_leds, std::move(recycle_buffer), method);
     }
 
     gradient_fx::gradient_fx(gradient_fx &&g_fx) noexcept : gradient_fx{neo::gradient{}} {
@@ -24,6 +26,7 @@ namespace neo {
     }
 
     gradient_fx &gradient_fx::operator=(gradient_fx &&g_fx) noexcept {
+        std::scoped_lock lock{_gradient_mutex, g_fx._gradient_mutex};
         // Signal that a move operation is in place. This RAII object upon destruction will swap the content of
         // the corresponding trackers.
         auto hold_move = g_fx.swap(*this);
@@ -42,9 +45,15 @@ namespace neo {
         {
             // Do not capture this, to enable movement of the object
             if (auto *g_fx = mlab::uniquely_tracked::track<gradient_fx>(tracker); g_fx != nullptr) {
-                // Use lambda initialization syntax and mutability to always recycle the buffer
-                buffer = g_fx->sample(strip.size(), elapsed, std::move(buffer), method);
-                ESP_ERROR_CHECK_WITHOUT_ABORT(strip.update(buffer, channel, false));
+                // Quickly try to lock, if fails, just drop frame
+                mlab::scoped_try_lock lock{g_fx->_gradient_mutex};
+                if (lock) {
+                    // Use lambda initialization syntax and mutability to always recycle the buffer
+                    buffer = g_fx->sample(strip.size(), elapsed, std::move(buffer), method);
+                    ESP_ERROR_CHECK_WITHOUT_ABORT(strip.update(buffer, channel, false));
+                } else {
+                    ESP_LOGW("NEO", "Dropping frame due to locked gradient fx operation");
+                }
             } else {
                 ESP_LOGE("NEO", "Unable to track gradient fx object.");
             }
@@ -52,7 +61,7 @@ namespace neo {
     }
 
     void gradient_fx_config::apply(gradient_fx &g_fx) const {
-        g_fx.set_gradient(std::move(gradient));
+        g_fx.set_gradient(gradient);
         g_fx.set_repeats(repeats);
         g_fx.set_duration(std::chrono::milliseconds{duration_ms});
     }

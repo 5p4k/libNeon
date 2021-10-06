@@ -18,16 +18,19 @@ namespace neo {
     }
 
     class gradient_fx : public mlab::uniquely_tracked {
-        neo::gradient _gradient;
-        std::chrono::milliseconds _duration;
-        float _repeats;
+        neo::gradient _gradient = {};
+        std::chrono::milliseconds _duration = 0ms;
+        float _repeats = 1.f;
+        std::recursive_mutex _gradient_mutex = {};
     public:
+        gradient_fx() = default;
+
         inline explicit gradient_fx(neo::gradient g, std::chrono::milliseconds duration = 1s, float repeats = 1.f);
 
         gradient_fx(gradient_fx &&g_fx) noexcept;
         gradient_fx &operator=(gradient_fx &&g_fx) noexcept;
 
-        [[nodiscard]] inline neo::gradient const &gradient() const;
+        [[nodiscard]] inline neo::gradient get_gradient() const;
         inline void set_gradient(neo::gradient g);
         [[nodiscard]] inline float repeats() const;
         [[nodiscard]] inline std::chrono::milliseconds duration() const;
@@ -70,10 +73,12 @@ namespace neo {
     }
 
     void gradient_fx::set_gradient(neo::gradient g) {
+        std::scoped_lock lock{_gradient_mutex};
         _gradient = std::move(g);
     }
 
-    const neo::gradient & gradient_fx::gradient() const {
+    neo::gradient gradient_fx::get_gradient() const {
+        std::scoped_lock lock{_gradient_mutex};
         return _gradient;
     }
 

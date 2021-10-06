@@ -52,7 +52,7 @@ namespace neo {
 
         inline void set_duration_y(std::chrono::milliseconds d);
 
-        [[nodiscard]] inline std::vector<rgb> const &matrix() const;
+        [[nodiscard]] inline std::vector<rgb> get_matrix() const;
 
         void set_matrix(std::vector<rgb> m, std::size_t w);
 
@@ -126,7 +126,7 @@ namespace neo {
         _repeats_x = n;
     }
 
-    std::vector<rgb> const &matrix_fx::matrix() const {
+    std::vector<rgb> matrix_fx::get_matrix() const {
         std::scoped_lock lock{_matrix_mutex};
         return _matrix;
     }
