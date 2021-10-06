@@ -29,6 +29,7 @@ namespace neo {
     class transmittable_rgb_strip {
     public:
         [[nodiscard]] virtual esp_err_t update(std::vector<rgb> const &colors, rmt_channel_t channel, bool wait_tx_done) = 0;
+        [[nodiscard]] virtual esp_err_t update(rgb color, rmt_channel_t channel, bool wait_tx_done) = 0;
         [[nodiscard]] virtual std::size_t size() const = 0;
 
         virtual ~transmittable_rgb_strip() = default;
@@ -49,11 +50,12 @@ namespace neo {
 
         static_assert(std::has_unique_object_representations_v<Led>, "The Led class will be transmitted directly");
 
-        explicit strip(std::pair<rmt_item32_s, rmt_item32_s> zero_one, float gamma = default_gamma);
+        explicit strip(std::pair<rmt_item32_s, rmt_item32_s> zero_one, std::size_t size = 0, float gamma = default_gamma);
 
-        strip(rmt_manager const &manager, controller chip, float gamma = default_gamma);
+        strip(rmt_manager const &manager, controller chip, std::size_t size = 0, float gamma = default_gamma);
 
         [[nodiscard]] esp_err_t update(std::vector<rgb> const &colors, rmt_channel_t channel, bool wait_tx_done) override;
+        [[nodiscard]] esp_err_t update(rgb color, rmt_channel_t channel, bool wait_tx_done) override;
 
         [[nodiscard]] esp_err_t transmit(rmt_channel_t channel, bool wait_tx_done) const;
 
@@ -199,7 +201,7 @@ namespace neo {
 namespace neo {
 
     template<class Led>
-    strip<Led>::strip(rmt_manager const &manager, controller chip, float gamma) :
+    strip<Led>::strip(rmt_manager const &manager, controller chip, std::size_t size, float gamma) :
             _zero{},
             _one{},
             _gamma{no_gamma},
@@ -209,16 +211,22 @@ namespace neo {
         _zero = zero;
         _one = one;
         set_gamma(gamma);
+        if (size > 0) {
+            resize(size);
+        }
     }
 
     template<class Led>
-    strip<Led>::strip(std::pair<rmt_item32_s, rmt_item32_s> zero_one, float gamma) :
+    strip<Led>::strip(std::pair<rmt_item32_s, rmt_item32_s> zero_one, std::size_t size, float gamma) :
             _zero{zero_one.first},
             _one{zero_one.second},
             _gamma{no_gamma},
             _gamma_table{nullptr}
     {
         set_gamma(gamma);
+        if (size > 0) {
+            resize(size);
+        }
     }
 
 
@@ -484,6 +492,15 @@ namespace neo {
         std::copy(std::begin(colors), std::end(colors), std::begin(*this));
         return transmit(channel, wait_tx_done);
     }
+
+    template <class Led>
+    esp_err_t strip<Led>::update(rgb color, rmt_channel_t channel, bool wait_tx_done) {
+        for (auto led : *this) {
+            led = color;
+        }
+        return transmit(channel, wait_tx_done);
+    }
+
 }
 
 #endif //PICOSKATE_NEOPIXEL_STRIP_HPP
