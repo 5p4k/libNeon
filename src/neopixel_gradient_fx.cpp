@@ -3,6 +3,7 @@
 //
 
 #include "neopixel_gradient_fx.hpp"
+#include "skate_data.hpp"
 #include <cmath>
 
 namespace neo {
@@ -48,5 +49,19 @@ namespace neo {
                 ESP_LOGE("NEO", "Unable to track gradient fx object.");
             }
         };
+    }
+
+    void gradient_fx_config::apply(gradient_fx &g_fx) const {
+        g_fx.set_gradient(std::move(gradient));
+        g_fx.set_repeats(repeats);
+        g_fx.set_duration(std::chrono::milliseconds{duration_ms});
+    }
+
+}
+
+namespace mlab {
+
+    mlab::bin_stream &operator>>(mlab::bin_stream &s, neo::gradient_fx_config &g_fx_cfg) {
+        return s >> g_fx_cfg.gradient >> g_fx_cfg.repeats >> lsb32 >> g_fx_cfg.duration_ms;
     }
 }

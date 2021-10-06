@@ -10,6 +10,7 @@
 #include <chrono>
 #include <functional>
 #include "mlab_unique_tracker.hpp"
+#include "bin_data.hpp"
 
 namespace neo {
     namespace {
@@ -38,8 +39,21 @@ namespace neo {
 
         [[nodiscard]] std::function<void(std::chrono::milliseconds)> make_steady_timer_callback(transmittable_rgb_strip &strip, rmt_channel_t channel, blending_method method = blend_linear) const;
     };
+
+    struct gradient_fx_config {
+        neo::gradient gradient = {};
+        float repeats = 1.f;
+        std::uint32_t duration_ms = 1000;
+
+        gradient_fx_config() = default;
+
+        void apply(gradient_fx &g_fx) const;
+    };
 }
 
+namespace mlab {
+    mlab::bin_stream &operator>>(mlab::bin_stream &s, neo::gradient_fx_config &g_fx_cfg);
+}
 namespace neo {
     gradient_fx::gradient_fx(neo::gradient g, std::chrono::milliseconds duration, float repeats) :
         _gradient{std::move(g)},
