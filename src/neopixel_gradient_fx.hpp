@@ -21,7 +21,7 @@ namespace neo {
         neo::gradient _gradient = {};
         std::chrono::milliseconds _duration = 0ms;
         float _repeats = 1.f;
-        std::recursive_mutex _gradient_mutex = {};
+        mutable std::recursive_mutex _gradient_mutex = {};
     public:
         gradient_fx() = default;
 

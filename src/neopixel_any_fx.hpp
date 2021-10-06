@@ -5,11 +5,12 @@
 #ifndef PICOSKATE_NEOPIXEL_ANY_FX_HPP
 #define PICOSKATE_NEOPIXEL_ANY_FX_HPP
 
-#include "any_of.hpp"
+#include <cstdint>
 #include "bin_data.hpp"
 #include "neopixel_gradient_fx.hpp"
 #include "neopixel_matrix_fx.hpp"
 #include "neopixel_solid_fx.hpp"
+#include "any_of.hpp"
 
 namespace neo {
 

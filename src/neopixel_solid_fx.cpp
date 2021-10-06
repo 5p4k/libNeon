@@ -46,5 +46,6 @@ namespace mlab {
         if (not s.bad()) {
             s_fx_cfg.color = neo::rgb{r, g, b};
         }
+        return s;
     }
 }

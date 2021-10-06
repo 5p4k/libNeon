@@ -25,7 +25,7 @@ namespace neo {
         std::chrono::milliseconds _duration_x = 0ms;
         std::chrono::milliseconds _duration_y = 0ms;
         float _repeats_x = 1.f;
-        std::recursive_mutex _matrix_mutex = {};
+        mutable std::recursive_mutex _matrix_mutex = {};
     public:
         matrix_fx() = default;
 
