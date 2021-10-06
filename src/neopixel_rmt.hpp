@@ -32,8 +32,8 @@ namespace neo {
         rmt_manager(rmt_config_t config, bool manage_driver);
         rmt_manager(rmt_manager const &) = delete;
         rmt_manager &operator=(rmt_manager const &) = delete;
-        rmt_manager(rmt_manager &&) noexcept = default;
-        rmt_manager &operator=(rmt_manager &&) noexcept = default;
+        rmt_manager(rmt_manager &&other) noexcept;
+        rmt_manager &operator=(rmt_manager &&other) noexcept;
 
         [[nodiscard]] inline operator rmt_channel_t() const;
 

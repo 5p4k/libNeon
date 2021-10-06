@@ -107,6 +107,16 @@ namespace neo {
             return;
         }
     }
+    rmt_manager::rmt_manager(rmt_manager &&other) noexcept {
+        *this = std::move(other);
+    }
+
+    rmt_manager &rmt_manager::operator=(rmt_manager &&other) noexcept {
+        std::swap(_channel, other._channel);
+        std::swap(_manage_driver, other._manage_driver);
+        return *this;
+    }
+
 
     std::uint32_t rmt_manager::get_clock_hertz() const {
         std::uint32_t retval = 0;
