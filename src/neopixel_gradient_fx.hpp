@@ -9,20 +9,25 @@
 #include "neopixel_strip.hpp"
 #include <chrono>
 #include <functional>
+#include "mlab_unique_tracker.hpp"
 
 namespace neo {
     namespace {
         using namespace std::chrono_literals;
     }
 
-    class gradient_fx {
-        neo::gradient const *_gradient;
+    class gradient_fx : public mlab::uniquely_tracked {
+        neo::gradient _gradient;
         std::chrono::milliseconds _duration;
         float _repeats;
     public:
-        inline explicit gradient_fx(neo::gradient const &g, std::chrono::milliseconds duration = 1s, float repeats = 1.f);
+        inline explicit gradient_fx(neo::gradient g, std::chrono::milliseconds duration = 1s, float repeats = 1.f);
+
+        gradient_fx(gradient_fx &&g_fx) noexcept;
+        gradient_fx &operator=(gradient_fx &&g_fx) noexcept;
 
         [[nodiscard]] inline neo::gradient const &gradient() const;
+        inline void set_gradient(neo::gradient g);
         [[nodiscard]] inline float repeats() const;
         [[nodiscard]] inline std::chrono::milliseconds duration() const;
 
@@ -36,8 +41,8 @@ namespace neo {
 }
 
 namespace neo {
-    gradient_fx::gradient_fx(const neo::gradient &g, std::chrono::milliseconds duration, float repeats) :
-        _gradient{&g},
+    gradient_fx::gradient_fx(neo::gradient g, std::chrono::milliseconds duration, float repeats) :
+        _gradient{std::move(g)},
         _duration{duration},
         _repeats{repeats}
     {}
@@ -50,8 +55,12 @@ namespace neo {
         return _repeats;
     }
 
+    void gradient_fx::set_gradient(neo::gradient g) {
+        _gradient = std::move(g);
+    }
+
     const neo::gradient & gradient_fx::gradient() const {
-        return *_gradient;
+        return _gradient;
     }
 
     void gradient_fx::set_duration(std::chrono::milliseconds d) {
