@@ -60,6 +60,8 @@ namespace neo {
         inline any_fx_config();
 
         void apply(any_fx &fx) const;
+
+        [[nodiscard]] std::string to_string() const;
     };
 
 

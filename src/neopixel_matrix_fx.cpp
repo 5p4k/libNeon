@@ -76,7 +76,7 @@ namespace neo {
         }
         std::scoped_lock lock{_matrix_mutex};
         _width = w;
-        _height = m.size() / w;
+        _height = w > 0 ? m.size() / w : 0;
         std::swap(_matrix, m);
     }
 
@@ -151,6 +151,20 @@ namespace neo {
         }
 
         return recycle_buffer;
+    }
+
+    std::string matrix_fx_config::to_string() const {
+        std::string buffer;
+        auto attempt_snprintf = [&](std::string *buffer) -> std::size_t {
+            return std::snprintf(buffer != nullptr ? buffer->data() : nullptr,
+                                 buffer != nullptr ? buffer->size() : 0,
+                                 "matrix %d×%d, %01.1f×, x %d ms, y %d ms",
+                                 width, width > 0 ? matrix.size() / width : 0, repeats_x, duration_x_ms, duration_y_ms);
+        };
+        buffer.clear();
+        buffer.resize(attempt_snprintf(nullptr) + 1 /* null terminator */, '\0');
+        attempt_snprintf(&buffer);
+        return buffer;
     }
 
     std::vector<rgb> matrix_fx::render_frame(transmittable_rgb_strip &strip, rmt_channel_t channel,

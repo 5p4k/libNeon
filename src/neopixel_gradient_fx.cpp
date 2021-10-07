@@ -74,6 +74,20 @@ namespace neo {
         g_fx.set_duration(std::chrono::milliseconds{duration_ms});
     }
 
+    std::string gradient_fx_config::to_string() const {
+        std::string buffer;
+        const auto gradient_desc = this->gradient.to_string();
+        auto attempt_snprintf = [&](std::string *buffer) -> std::size_t {
+            return std::snprintf(buffer != nullptr ? buffer->data() : nullptr,
+                                 buffer != nullptr ? buffer->size() : 0,
+                                 "gradient, %01.1f×, %d ms, %s",
+                                 repeats, duration_ms, gradient_desc.c_str());
+        };
+        buffer.clear();
+        buffer.resize(attempt_snprintf(nullptr) + 1 /* null terminator */, '\0');
+        attempt_snprintf(&buffer);
+        return buffer;
+    }
 }
 
 namespace mlab {

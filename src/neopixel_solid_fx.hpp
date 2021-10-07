@@ -39,6 +39,8 @@ namespace neo {
         solid_fx_config() = default;
 
         inline void apply(solid_fx &s_fx) const;
+
+        [[nodiscard]] std::string to_string() const;
     };
 }
 

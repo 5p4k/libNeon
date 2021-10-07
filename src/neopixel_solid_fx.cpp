@@ -41,6 +41,20 @@ namespace neo {
         };
     }
 
+    std::string solid_fx_config::to_string() const {
+        std::string buffer;
+        const auto color_str = color.to_string();
+        auto attempt_snprintf = [&](std::string *buffer) -> std::size_t {
+            return std::snprintf(buffer != nullptr ? buffer->data() : nullptr,
+                                 buffer != nullptr ? buffer->size() : 0,
+                                 "solid, %s",
+                                 color_str.c_str());
+        };
+        buffer.clear();
+        buffer.resize(attempt_snprintf(nullptr) + 1 /* null terminator */, '\0');
+        attempt_snprintf(&buffer);
+        return buffer;
+    }
 }
 
 namespace mlab {

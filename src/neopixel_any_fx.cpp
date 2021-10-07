@@ -54,6 +54,17 @@ namespace neo {
         return recycle_buffer;
     }
 
+    std::string any_fx_config::to_string() const {
+        switch (type()) {
+            case fx_type::solid:
+                return get<fx_type::solid>().to_string();
+            case fx_type::gradient:
+                return get<fx_type::gradient>().to_string();
+            case fx_type::matrix:
+                return get<fx_type::matrix>().to_string();
+        }
+        return "UNKNOWN";
+    }
 
     void any_fx_config::apply(any_fx &fx) const {
         switch (type()) {

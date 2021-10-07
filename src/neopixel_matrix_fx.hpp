@@ -86,6 +86,8 @@ namespace neo {
         matrix_fx_config() = default;
 
         void apply(matrix_fx &m_fx, float tile_x = 0.1f, float tile_y = 0.1f) const;
+
+        [[nodiscard]] std::string to_string() const;
     };
 
 }

@@ -56,6 +56,8 @@ namespace neo {
         gradient_fx_config() = default;
 
         void apply(gradient_fx &g_fx) const;
+
+        [[nodiscard]] std::string to_string() const;
     };
 }
 
