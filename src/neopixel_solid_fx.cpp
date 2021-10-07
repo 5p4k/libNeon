@@ -53,6 +53,7 @@ namespace neo {
         buffer.clear();
         buffer.resize(attempt_snprintf(nullptr) + 1 /* null terminator */, '\0');
         attempt_snprintf(&buffer);
+        buffer.resize(buffer.size() - 1); // Remove null terminator
         return buffer;
     }
 }
