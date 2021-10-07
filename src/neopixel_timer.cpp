@@ -56,7 +56,7 @@ namespace neo {
 
     void generic_timer::cbk_task_body(void *tracker) {
         if (auto *instance = mlab::uniquely_tracked::track<generic_timer>(tracker); instance != nullptr) {
-            ESP_LOGD("TIMER", "Timer %d:%d running on core %d.", instance->group(), instance->index(), xPortGetCoreID());
+            ESP_LOGI("TIMER", "Timer %d:%d running on core %d.", instance->group(), instance->index(), xPortGetCoreID());
             while (instance->_cbk_task != nullptr /* it's a me :D */) {
                 if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY) != 0) {
                     // Update instance pointer
