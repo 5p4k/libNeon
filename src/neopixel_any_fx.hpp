@@ -57,6 +57,7 @@ namespace neo {
     class any_fx_config : public mlab::any_of<fx_type, any_fx_config_data> {
     public:
         using mlab::any_of<fx_type, any_fx_config_data>::any_of;
+        inline any_fx_config();
 
         void apply(any_fx &fx) const;
     };
@@ -95,6 +96,9 @@ namespace neo {
     void any_fx::set_type(fx_type t) {
         _type = t;
     }
+    any_fx_config::any_fx_config() :
+        mlab::any_of<fx_type, any_fx_config_data>{any_fx_config_data<fx_type::solid>{solid_fx_config{}}}
+    {}
 }
 
 namespace mlab {
