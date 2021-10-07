@@ -14,7 +14,7 @@ namespace neo {
         lut_table_t table{};
         for (std::size_t i = 0; i < table.size(); ++i) {
             const float linear_v = srgb_to_linear(std::uint8_t(i));
-            table[i] = std::uint8_t(std::clamp(std::round(std::pow(linear_v, gamma)), 0.f, 255.f));
+            table[i] = std::uint8_t(std::clamp(std::round(255.f * std::pow(linear_v, gamma)), 0.f, 255.f));
         }
         return gamma_table{table};
     }
