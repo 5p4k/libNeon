@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <array>
 #include <algorithm>
+#include "bin_data.hpp"
 
 namespace neo {
     struct hsv;
@@ -193,6 +194,11 @@ namespace neo {
         return retval;
     }
 
+}
+
+namespace mlab {
+    bin_data &operator<<(bin_data &o, neo::rgb c);
+    bin_stream &operator>>(bin_stream &i, neo::rgb &c);
 }
 
 #endif //PICOSKATE_NEOPIXEL_COLOR_HPP

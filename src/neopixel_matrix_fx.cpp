@@ -213,7 +213,9 @@ namespace mlab {
         std::uint16_t matrix_size = 0;
         s >> lsb16 >> matrix_size;
         m_fx_cfg.matrix.resize(matrix_size);
-        s.read(std::begin(m_fx_cfg.matrix), m_fx_cfg.matrix.size());
+        for (auto &c : m_fx_cfg.matrix) {
+            s >> c;
+        }
         s >> m_fx_cfg.width;
         s >> float_lsb >> m_fx_cfg.repeats_x;
         s >> lsb32 >> m_fx_cfg.duration_x_ms;

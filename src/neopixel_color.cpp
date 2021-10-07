@@ -151,3 +151,14 @@ namespace neo {
     }
 
 }
+
+namespace mlab {
+
+    bin_data &operator<<(bin_data &o, neo::rgb c) {
+        return o << c.r << c.g << c.b;
+    }
+
+    bin_stream &operator>>(bin_stream &i, neo::rgb &c) {
+        return i >> c.r >> c.g >> c.b;
+    }
+}

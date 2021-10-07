@@ -13,9 +13,20 @@ namespace neo {
     using blending_method = rgb (&)(rgb l, rgb r, float t);
 
     [[maybe_unused]] rgb blend_linear(rgb l, rgb r, float t);
-    [[maybe_unused]] rgb blend_round_down(rgb l, rgb , float);
-    [[maybe_unused]] rgb blend_round_up(rgb , rgb r, float);
+    [[maybe_unused]] rgb blend_round_down(rgb l, rgb, float);
+    [[maybe_unused]] rgb blend_round_up(rgb, rgb r, float);
     [[maybe_unused]] rgb blend_nearest_neighbor(rgb l, rgb r, float t);
+
+    class gradient_entry;
+    class fixed_gradient_entry;
+}
+
+namespace mlab {
+    bin_stream &operator>>(bin_stream &i, neo::gradient_entry &ge);
+    bin_data &operator<<(bin_data &o, neo::fixed_gradient_entry const &fge);
+}
+
+namespace neo {
 
     class fixed_gradient_entry {
     protected:
@@ -26,6 +37,7 @@ namespace neo {
 
         fixed_gradient_entry &operator=(fixed_gradient_entry &&) noexcept = default;
 
+        friend mlab::bin_stream &mlab::operator>>(mlab::bin_stream &, neo::gradient_entry &);
     public:
         [[nodiscard]] inline float time() const;
 
@@ -48,7 +60,7 @@ namespace neo {
 
     class gradient_entry : protected fixed_gradient_entry {
         friend class gradient;
-
+        friend mlab::bin_stream &mlab::operator>>(mlab::bin_stream &, gradient_entry &);
     public:
         using fixed_gradient_entry::fixed_gradient_entry;
         using fixed_gradient_entry::operator=;
@@ -127,9 +139,7 @@ namespace neo {
 }
 
 namespace mlab {
-
     bin_data &operator<<(bin_data &o, neo::gradient const &g);
-
     bin_stream &operator>>(bin_stream &i, neo::gradient &g);
 }
 

@@ -224,10 +224,22 @@ namespace mlab {
         }
     }
 
+    bin_stream &operator>>(bin_stream &i, neo::gradient_entry &ge) {
+        std::uint8_t t = 0;
+        i >> ge._color >> t;
+        ge.set_time(byte_to_unit_float(t));
+        return i;
+    }
+
+    bin_data &operator<<(bin_data &o, neo::fixed_gradient_entry const &fge) {
+        return o << fge.color() << unit_float_to_byte(fge.time());
+    }
+
+
     bin_data &operator<<(bin_data &o, neo::gradient const &g) {
         o << std::uint8_t(g.size());
         for (const auto entry : g) {
-            o << entry.color().r << entry.color().g << entry.color().b << unit_float_to_byte(entry.time());
+            o << entry;
         }
         return o;
     }
@@ -237,12 +249,9 @@ namespace mlab {
         i >> n_entries;
         if (not i.bad() and i.remaining() >= n_entries * 4) {
             std::vector<neo::gradient_entry> entries;
-            entries.reserve(n_entries);
-            for (std::size_t j = 0; j < n_entries; ++j) {
-                neo::rgb c;
-                std::uint8_t t = 0;
-                i >> c.r >> c.g >> c.b >> t;
-                entries.emplace_back(byte_to_unit_float(t), c);
+            entries.resize(n_entries);
+            for (auto &entry : entries) {
+                i >> entry;
             }
             g = neo::gradient(std::move(entries));
         } else {
