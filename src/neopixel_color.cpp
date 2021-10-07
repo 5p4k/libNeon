@@ -27,8 +27,8 @@ namespace neo {
 
     std::string rgb::to_string() const {
         // Do not use stringstream, it requires tons of memory
-        static thread_local std::vector<char> buffer;
-        auto attempt_snprintf = [&](std::vector<char> *buffer) -> std::size_t {
+        std::string buffer;
+        auto attempt_snprintf = [&](std::string *buffer) -> std::size_t {
             return std::snprintf(buffer != nullptr ? buffer->data() : nullptr,
                                  buffer != nullptr ? buffer->size() : 0,
                                  "#%02x%02x%02x",
@@ -37,7 +37,7 @@ namespace neo {
         buffer.clear();
         buffer.resize(attempt_snprintf(nullptr) + 1 /* null terminator */, '\0');
         attempt_snprintf(&buffer);
-        return std::string{buffer.data()};
+        return buffer;
     }
 
 
