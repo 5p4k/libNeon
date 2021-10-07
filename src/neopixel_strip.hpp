@@ -172,7 +172,7 @@ namespace neo {
     public:
         cref(strip<Led> const &neo, Led const &cref);
 
-        [[nodiscard]] inline operator Led() const;
+        [[nodiscard]] inline explicit operator Led() const;
 
         [[nodiscard]] rgb get_color() const;
     };
@@ -182,13 +182,14 @@ namespace neo {
     class ref : public cref<Led> {
         std::vector<rmt_item32_s>::iterator _repr_it;
         using cref<Led>::_strip;
+        using cref<Led>::_cref;
+
+        [[nodiscard]] inline Led &get_ref() { return const_cast<Led &>(_cref); }
     public:
         explicit ref(strip<Led> const &neo, Led &ref, std::vector<rmt_item32_s>::iterator repr_it);
 
         using cref<Led>::operator Led;
         using cref<Led>::get_color;
-
-        [[nodiscard]] inline operator Led &();
 
         void set_color(rgb c);
 
@@ -424,16 +425,11 @@ namespace neo {
             _repr_it{repr_it} {}
 
 
-
-    template<class Led>
-    ref<Led>::operator Led &() {
-        return const_cast<Led &>(cref<Led>::_cref);
-    }
-
     template<class Led>
     void ref<Led>::set_color(rgb c) {
-        Led &led = *this;
-        led.set_color(c, _strip.get_gamma_table());
+        get_ref().set_color(c, _strip.get_gamma_table());
+        // Make sure to copy the byte representation
+        populate(_repr_it, Led(*this), _strip.zero(), _strip.one());
     }
 
     template<class Led>
@@ -444,10 +440,9 @@ namespace neo {
 
     template<class Led>
     ref<Led> &ref<Led>::operator=(Led v) {
-        Led &led = *this;
-        led = v;
+        get_ref() = v;
         // Make sure to copy the byte representation
-        populate(_repr_it, v, _strip.zero(), _strip.one());
+        populate(_repr_it, Led(*this), _strip.zero(), _strip.one());
         return *this;
     }
 
