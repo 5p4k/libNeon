@@ -212,6 +212,19 @@ namespace mlab {
     mlab::bin_stream &operator>>(mlab::bin_stream &s, neo::matrix_fx_config &m_fx_cfg) {
         std::uint16_t matrix_size = 0;
         s >> lsb16 >> matrix_size;
+        if (s.remaining() < matrix_size * 3 + 13) {
+            ESP_LOGW("NEO", "Not enough data to parse a matrix of size %d.", matrix_size);
+            s.set_bad();
+            return s;
+        }
+        // Safety check: too large? Want 50% margin, each color is 3 bytes
+        const std::size_t avail_mem = xPortGetFreeHeapSize();
+        if (avail_mem < matrix_size * 6) {
+            ESP_LOGE("NEO", "Cannot parse a matrix fx of size %d, not enough memory at 50%% margin (%d)",
+                     matrix_size, avail_mem);
+            s.set_bad();
+            return s;
+        }
         m_fx_cfg.matrix.resize(matrix_size);
         for (auto &c : m_fx_cfg.matrix) {
             s >> c;
