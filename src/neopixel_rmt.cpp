@@ -26,12 +26,12 @@ namespace neo {
         static constexpr auto ws2811_1h = 1200ns;
         static constexpr auto ws2811_1l = 1300ns;
 
-        [[nodiscard]] rmt_item32_s make_rmt_item_bit(nanosec h, nanosec l, std::uint32_t hz) {
+        [[nodiscard]] rmt_item32_s make_rmt_item_bit(nanosec h, nanosec l, std::uint32_t hz, bool inverted) {
             return rmt_item32_s{{{
                     .duration0 = std::uint32_t(double(h.count()) * hz * 1.e-9),
-                    .level0 = 1,
+                    .level0 = inverted ? 0u : 1u,
                     .duration1 = std::uint32_t(double(l.count()) * hz * 1.e-9),
-                    .level1 = 0
+                    .level1 = inverted ? 1u : 0u
             }}};
         }
     }
@@ -72,15 +72,15 @@ namespace neo {
         return retval;
     }
 
-    std::pair<rmt_item32_s, rmt_item32_s> make_zero_one(rmt_manager const &manager, controller chip) {
+    std::pair<rmt_item32_s, rmt_item32_s> make_zero_one(rmt_manager const &manager, controller chip, bool inverted) {
         const auto clock_hz = manager.get_clock_hertz();
         switch (chip) {
             case controller::ws2811_400khz:
-                return {timings::make_rmt_item_bit(timings::ws2811_0h, timings::ws2811_0l, clock_hz),
-                        timings::make_rmt_item_bit(timings::ws2811_1h, timings::ws2811_1l, clock_hz)};
+                return {timings::make_rmt_item_bit(timings::ws2811_0h, timings::ws2811_0l, clock_hz, inverted),
+                        timings::make_rmt_item_bit(timings::ws2811_1h, timings::ws2811_1l, clock_hz, inverted)};
             case controller::ws2812_800khz:
-                return {timings::make_rmt_item_bit(timings::ws2812_0h, timings::ws2812_0l, clock_hz),
-                        timings::make_rmt_item_bit(timings::ws2812_1h, timings::ws2812_1l, clock_hz)};
+                return {timings::make_rmt_item_bit(timings::ws2812_0h, timings::ws2812_0l, clock_hz, inverted),
+                        timings::make_rmt_item_bit(timings::ws2812_1h, timings::ws2812_1l, clock_hz, inverted)};
             default:
                 return {{},
                         {}};

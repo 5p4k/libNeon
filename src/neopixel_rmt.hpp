@@ -22,7 +22,7 @@ namespace neo {
 
     [[nodiscard]] rmt_config_t make_rmt_config(rmt_channel_t channel, gpio_num_t gpio);
 
-    [[nodiscard]] std::pair<rmt_item32_s, rmt_item32_s> make_zero_one(rmt_manager const &manager, controller chip);
+    [[nodiscard]] std::pair<rmt_item32_s, rmt_item32_s> make_zero_one(rmt_manager const &manager, controller chip, bool inverted = false);
 
     class rmt_manager {
         rmt_channel_t _channel = RMT_CHANNEL_MAX;

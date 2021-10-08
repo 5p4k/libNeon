@@ -52,7 +52,7 @@ namespace neo {
 
         explicit strip(std::pair<rmt_item32_s, rmt_item32_s> zero_one, std::size_t size = 0, float gamma = default_gamma);
 
-        strip(rmt_manager const &manager, controller chip, std::size_t size = 0, float gamma = default_gamma);
+        strip(rmt_manager const &manager, controller chip, std::size_t size = 0, bool inverted = false, float gamma = default_gamma);
 
         [[nodiscard]] esp_err_t update(std::vector<rgb> const &colors, rmt_channel_t channel, bool wait_tx_done) override;
         [[nodiscard]] esp_err_t update(rgb color, rmt_channel_t channel, bool wait_tx_done) override;
@@ -202,13 +202,13 @@ namespace neo {
 namespace neo {
 
     template<class Led>
-    strip<Led>::strip(rmt_manager const &manager, controller chip, std::size_t size, float gamma) :
+    strip<Led>::strip(rmt_manager const &manager, controller chip, std::size_t size, bool inverted, float gamma) :
             _zero{},
             _one{},
             _gamma{no_gamma},
             _gamma_table{nullptr}
     {
-        auto[zero, one] = make_zero_one(manager, chip);
+        auto[zero, one] = make_zero_one(manager, chip, inverted);
         _zero = zero;
         _one = one;
         set_gamma(gamma);
