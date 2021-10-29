@@ -212,6 +212,7 @@ namespace mlab {
     mlab::bin_stream &operator>>(mlab::bin_stream &s, neo::matrix_fx_config &m_fx_cfg) {
         std::uint16_t matrix_size = 0;
         s >> lsb16 >> matrix_size;
+        ESP_LOGI("NEO", "Matrix size: %d", matrix_size);
         if (s.remaining() < matrix_size * 3 + 13) {
             ESP_LOGW("NEO", "Not enough data to parse a matrix of size %d.", matrix_size);
             s.set_bad();
