@@ -1,0 +1,92 @@
+stages:
+  - check
+  - build
+  - deploy
+
+
+.pio-cache: &pio-cache
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}
+    paths:
+      - .pio
+
+.rules-master: &rules-master
+  if: '$CI_COMMIT_BRANCH == "master"'
+  when: always
+
+
+check format:
+  stage: check
+  image: alpine
+  allow_failure: true
+  before_script:
+    - apk add --update --no-cache git clang clang-extra-tools
+  script:
+    - >
+      find . \( -not -path '\./\.*' \) -and \( -name '*.[hc]' -or -name '*.[hc]pp' \) | while read -r FILE; do
+          echo "Formatting $FILE"
+          clang-format --style file -i "$FILE"
+      done
+    - git diff --patch | tee 0001-Clang-format.patch
+    - test ! -s 0001-Clang-format.patch
+  artifacts:
+    paths:
+      - 0001-Clang-format.patch
+    expire_in: 1 week
+    when: on_failure
+  rules:
+    # Run always, on merge request too
+    - when: always
+
+
+build test firmware:
+  stage: build
+  image: ${CI_REGISTRY}/proj/testinator/esp32:latest
+  <<: *pio-cache
+  before_script:
+    - cp cicd/platformio.ini platformio.ini
+  script:
+    # Remove the cached firmwares to ensure we will rebuild
+    - rm -f .pio/**/firmware.{bin,elf}
+    - pio run
+    - pio test --without-uploading --without-testing
+  artifacts:
+    paths:
+      - .pio/**/*.checksum  # Without this, `pio run` deletes the firmware
+      - .pio/**/firmware.bin
+      - .pio/**/firmware.elf
+  rules:
+    - when: always
+
+
+publish library:
+  image: ${CI_REGISTRY}/proj/testinator/esp32:latest
+  stage: deploy
+  before_script:
+    - python3 -m pip install --user gitpython
+  script:
+    - |
+      python3 cicd/check_version.py && \
+      pio package publish --owner ${PLATFORMIO_ORG} --non-interactive
+  only:
+    - tags
+  except:
+    - branches
+
+
+pages:
+  stage: deploy
+  image: alpine
+  needs:
+    - check format
+  before_script:
+    - apk add --update --no-cache doxygen graphviz ttf-opensans
+  script:
+    - doxygen ./docs/doxigen.conf
+    - mkdir -p public
+    - cp -r docs/_build/html/* public
+  artifacts:
+    paths:
+      - public
+  rules:
+    - <<: *rules-master

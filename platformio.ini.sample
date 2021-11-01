@@ -1,0 +1,24 @@
+[env:m5stack-core-esp32]
+platform = espressif32
+framework = espidf
+
+; NEO_UNIT_TEST_MAIN: when defined, compiles a `void app_main()` that kicks off the unit tests.
+
+build_unflags = -std=gnu++11 -std=gnu++14 -std=c++11 -std=c++14 -std=c++17
+build_flags =
+    -std=gnu++17
+    -Wall -Wextra
+    -D NEO_UNIT_TEST_MAIN
+;    -D LOG_LOCAL_LEVEL=ESP_LOG_DEBUG
+;    -D CORE_DEBUG_LEVEL=5
+
+; These settings combined with -D NEO_UNIT_TEST_MAIN allow to compile the tests with `pio run` which is not
+test_transport = custom
+monitor_flags = --raw
+test_build_project_src = yes
+
+;upload_port=/dev/ttyUSB0
+;monitor_port=/dev/ttyUSB0
+;test_port=/dev/ttyUSB0
+;monitor_speed = 115200
+;board = m5stack-core-esp32
