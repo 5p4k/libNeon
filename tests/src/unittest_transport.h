@@ -1,7 +1,5 @@
-#ifndef NEO_UNITTEST_TRANSPORT_H
-#define NEO_UNITTEST_TRANSPORT_H
-
-#ifdef NEO_UNIT_TEST_MAIN
+#ifndef SPOOKY_UNITTEST_TRANSPORT_H
+#define SPOOKY_UNITTEST_TRANSPORT_H
 
 #include <stdio.h>
 
@@ -19,5 +17,4 @@ void unittest_uart_flush() {
 void unittest_uart_end() {
 }
 
-#endif
 #endif
