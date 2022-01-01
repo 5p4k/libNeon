@@ -8,7 +8,7 @@
 #include <mlab/unique_tracker.hpp>
 #include <neo/strip.hpp>
 #include <mutex>
-#include <bin_data.hpp>
+#include <mlab/bin_data.hpp>
 
 namespace neo {
 

@@ -2,7 +2,6 @@
 platform = espressif32
 framework = espidf
 ; board = esp32dev
-; Add here lib_deps if the library has dependencies.
 
 ; upload_port=/dev/ttyUSB0
 ; monitor_port=/dev/ttyUSB0

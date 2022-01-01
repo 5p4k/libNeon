@@ -10,7 +10,7 @@
 #include <chrono>
 #include <functional>
 #include <mlab/unique_tracker.hpp>
-#include <bin_data.hpp>
+#include <mlab/bin_data.hpp>
 
 namespace neo {
     namespace {

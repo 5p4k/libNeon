@@ -7,7 +7,7 @@
 
 #include <neo/color.hpp>
 #include <vector>
-#include <bin_data.hpp>
+#include <mlab/bin_data.hpp>
 
 namespace neo {
     using blending_method = rgb (&)(rgb l, rgb r, float t);
