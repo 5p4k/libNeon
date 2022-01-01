@@ -2,7 +2,7 @@
 // Created by spak on 6/7/21.
 //
 
-#include "neopixel_timer.hpp"
+#include <neo/timer.hpp>
 #include <esp_log.h>
 
 

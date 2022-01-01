@@ -5,10 +5,10 @@
 #ifndef PICOSKATE_NEOPIXEL_MATRIX_FX_HPP
 #define PICOSKATE_NEOPIXEL_MATRIX_FX_HPP
 
-#include "neopixel_strip.hpp"
-#include "neopixel_gradient.hpp"
-#include "mlab_unique_tracker.hpp"
-#include "bin_data.hpp"
+#include <neo/strip.hpp>
+#include <neo/gradient.hpp>
+#include <mlab/unique_tracker.hpp>
+#include <bin_data.hpp>
 #include <chrono>
 #include <functional>
 #include <mutex>

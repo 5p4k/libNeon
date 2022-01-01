@@ -5,9 +5,9 @@
 #ifndef PICOSKATE_NEOPIXEL_GRADIENT_HPP
 #define PICOSKATE_NEOPIXEL_GRADIENT_HPP
 
-#include "neopixel_color.hpp"
+#include <neo/color.hpp>
 #include <vector>
-#include "bin_data.hpp"
+#include <bin_data.hpp>
 
 namespace neo {
     using blending_method = rgb (&)(rgb l, rgb r, float t);

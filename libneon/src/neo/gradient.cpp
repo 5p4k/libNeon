@@ -2,7 +2,7 @@
 // Created by spak on 6/5/21.
 //
 
-#include "neopixel_gradient.hpp"
+#include <neo/gradient.hpp>
 #include <cassert>
 #include <cmath>
 #include <sstream>

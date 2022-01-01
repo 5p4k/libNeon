@@ -7,10 +7,10 @@
 
 #include <vector>
 #include <limits>
-#include <neopixel_rmt.hpp>
+#include <neo/rmt.hpp>
 #include <cmath>
-#include "neopixel_color.hpp"
-#include "neopixel_gamma.hpp"
+#include <neo/color.hpp>
+#include <neo/gamma.hpp>
 
 namespace neo {
 

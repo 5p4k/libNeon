@@ -2,7 +2,7 @@
 // Created by spak on 6/4/21.
 //
 
-#include "neopixel_color.hpp"
+#include <neo/color.hpp>
 #include <cmath>
 #include <vector>
 

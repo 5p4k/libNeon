@@ -5,7 +5,7 @@
 #ifndef PICOSKATE_NEOPIXEL_LED_HPP
 #define PICOSKATE_NEOPIXEL_LED_HPP
 
-#include "neopixel_color.hpp"
+#include <neo/color.hpp>
 #include <array>
 #include <algorithm>
 

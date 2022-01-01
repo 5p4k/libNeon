@@ -2,7 +2,7 @@
 // Created by spak on 10/6/21.
 //
 
-#include "neopixel_any_fx.hpp"
+#include <neo/any_fx.hpp>
 
 namespace neo {
 

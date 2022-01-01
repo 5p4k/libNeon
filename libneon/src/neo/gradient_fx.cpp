@@ -2,10 +2,10 @@
 // Created by spak on 6/6/21.
 //
 
-#include "neopixel_gradient_fx.hpp"
-#include "skate_data.hpp"
-#include "mlab_mutex.hpp"
-#include "mlab_float_io.hpp"
+#include <neo/gradient_fx.hpp>
+#include <skate_data.hpp>
+#include <mlab/mutex.hpp>
+#include <mlab/float_io.hpp>
 #include <cmath>
 
 namespace neo {

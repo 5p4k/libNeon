@@ -2,11 +2,11 @@
 // Created by spak on 10/6/21.
 //
 
-#include "neopixel_matrix_fx.hpp"
+#include <neo/matrix_fx.hpp>
 #include <algorithm>
-#include "mlab_mutex.hpp"
-#include "skate_data.hpp"
-#include "mlab_float_io.hpp"
+#include <mlab/mutex.hpp>
+#include <skate_data.hpp>
+#include <mlab/float_io.hpp>
 
 namespace neo {
 

@@ -5,12 +5,12 @@
 #ifndef PICOSKATE_NEOPIXEL_GRADIENT_FX_HPP
 #define PICOSKATE_NEOPIXEL_GRADIENT_FX_HPP
 
-#include "neopixel_gradient.hpp"
-#include "neopixel_strip.hpp"
+#include <neo/gradient.hpp>
+#include <neo/strip.hpp>
 #include <chrono>
 #include <functional>
-#include "mlab_unique_tracker.hpp"
-#include "bin_data.hpp"
+#include <mlab/unique_tracker.hpp>
+#include <bin_data.hpp>
 
 namespace neo {
     namespace {

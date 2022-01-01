@@ -8,7 +8,7 @@
 #include <cstdint>
 #include <array>
 #include <algorithm>
-#include "bin_data.hpp"
+#include <bin_data.hpp>
 
 namespace neo {
     struct hsv;

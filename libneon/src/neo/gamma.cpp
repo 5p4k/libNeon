@@ -2,8 +2,8 @@
 // Created by spak on 9/23/21.
 //
 
-#include "neopixel_gamma.hpp"
-#include "neopixel_color.hpp"
+#include <neo/gamma.hpp>
+#include <neo/color.hpp>
 #include <cmath>
 #include <algorithm>
 #include <mutex>

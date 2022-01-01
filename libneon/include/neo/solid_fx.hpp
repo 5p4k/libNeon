@@ -5,10 +5,10 @@
 #ifndef PICOSKATE_NEOPIXEL_SOLID_FX_HPP
 #define PICOSKATE_NEOPIXEL_SOLID_FX_HPP
 
-#include "mlab_unique_tracker.hpp"
-#include "neopixel_strip.hpp"
+#include <mlab/unique_tracker.hpp>
+#include <neo/strip.hpp>
 #include <mutex>
-#include "bin_data.hpp"
+#include <bin_data.hpp>
 
 namespace neo {
 

@@ -2,8 +2,8 @@
 // Created by spak on 10/6/21.
 //
 
-#include "neopixel_solid_fx.hpp"
-#include "mlab_mutex.hpp"
+#include <neo/solid_fx.hpp>
+#include <mlab/mutex.hpp>
 
 namespace neo {
 
