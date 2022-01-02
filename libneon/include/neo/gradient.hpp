@@ -2,8 +2,8 @@
 // Created by spak on 6/5/21.
 //
 
-#ifndef PICOSKATE_NEOPIXEL_GRADIENT_HPP
-#define PICOSKATE_NEOPIXEL_GRADIENT_HPP
+#ifndef NEO_GRADIENT_HPP
+#define NEO_GRADIENT_HPP
 
 #include <neo/color.hpp>
 #include <vector>
@@ -219,4 +219,4 @@ namespace neo {
         return _entries.at(i);
     }
 }
-#endif //PICOSKATE_NEOPIXEL_GRADIENT_HPP
+#endif //NEO_GRADIENT_HPP

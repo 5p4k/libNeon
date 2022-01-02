@@ -2,8 +2,8 @@
 // Created by spak on 10/6/21.
 //
 
-#ifndef PICOSKATE_NEOPIXEL_MATRIX_FX_HPP
-#define PICOSKATE_NEOPIXEL_MATRIX_FX_HPP
+#ifndef NEO_MATRIX_FX_HPP
+#define NEO_MATRIX_FX_HPP
 
 #include <neo/strip.hpp>
 #include <neo/gradient.hpp>
@@ -138,4 +138,4 @@ namespace neo {
     }
 }
 
-#endif //PICOSKATE_NEOPIXEL_MATRIX_FX_HPP
+#endif //NEO_MATRIX_FX_HPP

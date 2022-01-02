@@ -2,8 +2,8 @@
 // Created by spak on 10/6/21.
 //
 
-#ifndef PICOSKATE_NEOPIXEL_ANY_FX_HPP
-#define PICOSKATE_NEOPIXEL_ANY_FX_HPP
+#ifndef NEO_ANY_FX_HPP
+#define NEO_ANY_FX_HPP
 
 #include <cstdint>
 #include <mlab/bin_data.hpp>
@@ -107,4 +107,4 @@ namespace mlab {
     mlab::bin_stream &operator>>(mlab::bin_stream &s, neo::any_fx_config &fx_cfg);
 }
 
-#endif //PICOSKATE_NEOPIXEL_ANY_FX_HPP
+#endif //NEO_ANY_FX_HPP

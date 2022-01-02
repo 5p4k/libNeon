@@ -2,8 +2,8 @@
 // Created by spak on 9/23/21.
 //
 
-#ifndef PICOSKATE_NEOPIXEL_GAMMA_H
-#define PICOSKATE_NEOPIXEL_GAMMA_H
+#ifndef NEO_GAMMA_H
+#define NEO_GAMMA_H
 
 #include <array>
 #include <map>
@@ -67,4 +67,4 @@ namespace neo {
     }
 }
 
-#endif //PICOSKATE_NEOPIXEL_GAMMA_H
+#endif //NEO_GAMMA_H

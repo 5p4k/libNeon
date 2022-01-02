@@ -2,8 +2,8 @@
 // Created by spak on 5/28/21.
 //
 
-#ifndef PICOSKATE_NEOPIXEL_RMT_HPP
-#define PICOSKATE_NEOPIXEL_RMT_HPP
+#ifndef NEO_RMT_HPP
+#define NEO_RMT_HPP
 
 #include <cstdint>
 #include <driver/rmt.h>
@@ -52,4 +52,4 @@ namespace neo {
 
 }
 
-#endif //PICOSKATE_NEOPIXEL_RMT_HPP
+#endif //NEO_RMT_HPP

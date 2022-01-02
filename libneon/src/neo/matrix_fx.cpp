@@ -5,8 +5,6 @@
 #include <neo/matrix_fx.hpp>
 #include <algorithm>
 #include <mlab/mutex.hpp>
-#include <skate_data.hpp>
-#include <mlab/float_io.hpp>
 
 namespace neo {
 
@@ -231,7 +229,7 @@ namespace mlab {
             s >> c;
         }
         s >> m_fx_cfg.width;
-        s >> float_lsb >> m_fx_cfg.repeats_x;
+        s >> lsb16 >> m_fx_cfg.repeats_x;
         s >> lsb32 >> m_fx_cfg.duration_x_ms;
         s >> lsb32 >> m_fx_cfg.duration_y_ms;
         return s;

@@ -2,10 +2,11 @@
 // Created by spak on 6/3/21.
 //
 
-#ifndef PICOSKATE_NEOPIXEL_LED_HPP
-#define PICOSKATE_NEOPIXEL_LED_HPP
+#ifndef NEO_LED_HPP
+#define NEO_LED_HPP
 
 #include <neo/color.hpp>
+#include <neo/gamma.hpp>
 #include <array>
 #include <algorithm>
 
@@ -136,4 +137,4 @@ namespace neo {
 
 }
 
-#endif //PICOSKATE_NEOPIXEL_LED_HPP
+#endif //NEO_LED_HPP

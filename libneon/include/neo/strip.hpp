@@ -2,8 +2,8 @@
 // Created by spak on 5/28/21.
 //
 
-#ifndef PICOSKATE_NEOPIXEL_STRIP_HPP
-#define PICOSKATE_NEOPIXEL_STRIP_HPP
+#ifndef NEO_STRIP_HPP
+#define NEO_STRIP_HPP
 
 #include <vector>
 #include <limits>
@@ -498,4 +498,4 @@ namespace neo {
 
 }
 
-#endif //PICOSKATE_NEOPIXEL_STRIP_HPP
+#endif //NEO_STRIP_HPP

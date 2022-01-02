@@ -2,8 +2,8 @@
 // Created by spak on 6/4/21.
 //
 
-#ifndef PICOSKATE_NEOPIXEL_COLOR_HPP
-#define PICOSKATE_NEOPIXEL_COLOR_HPP
+#ifndef NEO_COLOR_HPP
+#define NEO_COLOR_HPP
 
 #include <cstdint>
 #include <array>
@@ -201,4 +201,4 @@ namespace mlab {
     bin_stream &operator>>(bin_stream &i, neo::rgb &c);
 }
 
-#endif //PICOSKATE_NEOPIXEL_COLOR_HPP
+#endif //NEO_COLOR_HPP

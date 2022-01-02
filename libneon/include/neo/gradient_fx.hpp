@@ -2,8 +2,8 @@
 // Created by spak on 6/6/21.
 //
 
-#ifndef PICOSKATE_NEOPIXEL_GRADIENT_FX_HPP
-#define PICOSKATE_NEOPIXEL_GRADIENT_FX_HPP
+#ifndef NEO_GRADIENT_FX_HPP
+#define NEO_GRADIENT_FX_HPP
 
 #include <neo/gradient.hpp>
 #include <neo/strip.hpp>
@@ -99,4 +99,4 @@ namespace neo {
 
 }
 
-#endif //PICOSKATE_NEOPIXEL_GRADIENT_FX_HPP
+#endif //NEO_GRADIENT_FX_HPP

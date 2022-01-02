@@ -2,8 +2,8 @@
 // Created by spak on 6/7/21.
 //
 
-#ifndef PICOSKATE_NEOPIXEL_TIMER_HPP
-#define PICOSKATE_NEOPIXEL_TIMER_HPP
+#ifndef NEO_TIMER_HPP
+#define NEO_TIMER_HPP
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/timers.h>
@@ -162,4 +162,4 @@ namespace neo {
     }
 }
 
-#endif //PICOSKATE_NEOPIXEL_TIMER_HPP
+#endif //NEO_TIMER_HPP

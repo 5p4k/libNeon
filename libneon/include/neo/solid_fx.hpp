@@ -2,8 +2,8 @@
 // Created by spak on 10/6/21.
 //
 
-#ifndef PICOSKATE_NEOPIXEL_SOLID_FX_HPP
-#define PICOSKATE_NEOPIXEL_SOLID_FX_HPP
+#ifndef NEO_SOLID_FX_HPP
+#define NEO_SOLID_FX_HPP
 
 #include <mlab/unique_tracker.hpp>
 #include <neo/strip.hpp>
@@ -69,4 +69,4 @@ namespace neo {
     }
 }
 
-#endif //PICOSKATE_NEOPIXEL_SOLID_FX_HPP
+#endif //NEO_SOLID_FX_HPP
