@@ -5,7 +5,6 @@ include:
 stages:
   - check
   - build
-  - test
   - deploy
 
 
@@ -111,28 +110,6 @@ build examples:
     - if: '$CI_COMMIT_MESSAGE =~ /skip examples/'
       when: never
     # Run on merge request
-    - <<: *rules-merge-to-master
-    # But skip by default if the sources did not change
-    - <<: *rules-changes-sources
-    - <<: *rules-changes-cicd
-
-
-test hardware:
-  stage: test
-  image: ${CI_REGISTRY}/proj/testinator/esp32:latest
-  tags:
-    - pn532
-  dependencies:
-    - build test firmware
-  before_script:
-    - cp cicd/platformio.ini "${PIO_PROJ_FOLDER}/platformio.ini"
-    - cd "${PIO_PROJ_FOLDER}"
-  script:
-    # Make two attempts at uploading. Do not use pio test beause it always returns 0
-    - pio run -t nobuild -t upload --verbose || pio run -t nobuild -t upload --verbose
-    - pio test --without-building --without-uploading --verbose
-  rules:
-    # Run always, on merge request too
     - <<: *rules-merge-to-master
     # But skip by default if the sources did not change
     - <<: *rules-changes-sources
