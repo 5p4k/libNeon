@@ -22,11 +22,8 @@ namespace neo {
     }
 
     std::function<void(std::chrono::milliseconds)> any_fx::make_steady_timer_callback(
-            transmittable_rgb_strip &strip, rmt_channel_t channel, blending_method method) const
-    {
-        return [buffer = std::vector<rgb>{}, &strip, channel, method, tracker = tracker()]
-                (std::chrono::milliseconds elapsed) mutable
-        {
+            transmittable_rgb_strip &strip, rmt_channel_t channel, blending_method method) const {
+        return [buffer = std::vector<rgb>{}, &strip, channel, method, tracker = tracker()](std::chrono::milliseconds elapsed) mutable {
             // Do not capture this, to enable movement of the object
             if (auto *fx = mlab::uniquely_tracked::track<any_fx>(tracker); fx != nullptr) {
                 buffer = fx->render_frame(strip, channel, elapsed, std::move(buffer), method);
@@ -37,9 +34,8 @@ namespace neo {
     }
 
     std::vector<rgb> any_fx::render_frame(transmittable_rgb_strip &strip, rmt_channel_t channel,
-                                  std::chrono::milliseconds elapsed, std::vector<rgb> recycle_buffer,
-                                  blending_method method) const
-    {
+                                          std::chrono::milliseconds elapsed, std::vector<rgb> recycle_buffer,
+                                          blending_method method) const {
         switch (type()) {
             case fx_type::solid:
                 s_fx().render_frame(strip, channel);
@@ -80,7 +76,7 @@ namespace neo {
         }
         fx.set_type(type());
     }
-}
+}// namespace neo
 
 namespace mlab {
 
@@ -93,22 +89,19 @@ namespace mlab {
                     neo::solid_fx_config s_cfg{};
                     s >> s_cfg;
                     fx_cfg = neo::any_fx_config_data<neo::fx_type::solid>{std::forward<neo::solid_fx_config>(s_cfg)};
-                }
-                    break;
+                } break;
                 case neo::fx_type::gradient: {
                     neo::gradient_fx_config g_cfg{};
                     s >> g_cfg;
                     fx_cfg = neo::any_fx_config_data<neo::fx_type::gradient>{std::forward<neo::gradient_fx_config>(g_cfg)};
-                }
-                    break;
+                } break;
                 case neo::fx_type::matrix: {
                     neo::matrix_fx_config m_cfg{};
                     s >> m_cfg;
                     fx_cfg = neo::any_fx_config_data<neo::fx_type::matrix>{std::forward<neo::matrix_fx_config>(m_cfg)};
-                }
-                    break;
+                } break;
             }
         }
         return s;
     }
-}
+}// namespace mlab

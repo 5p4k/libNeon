@@ -5,13 +5,13 @@
 #ifndef NEO_MATRIX_FX_HPP
 #define NEO_MATRIX_FX_HPP
 
-#include <neo/strip.hpp>
-#include <neo/gradient.hpp>
-#include <mlab/unique_tracker.hpp>
-#include <mlab/bin_data.hpp>
 #include <chrono>
 #include <functional>
+#include <mlab/bin_data.hpp>
+#include <mlab/unique_tracker.hpp>
 #include <mutex>
+#include <neo/gradient.hpp>
+#include <neo/strip.hpp>
 
 namespace neo {
     namespace {
@@ -26,6 +26,7 @@ namespace neo {
         std::chrono::milliseconds _duration_y = 0ms;
         float _repeats_x = 1.f;
         mutable std::recursive_mutex _matrix_mutex = {};
+
     public:
         matrix_fx() = default;
 
@@ -90,7 +91,7 @@ namespace neo {
         [[nodiscard]] std::string to_string() const;
     };
 
-}
+}// namespace neo
 
 namespace mlab {
     mlab::bin_stream &operator>>(mlab::bin_stream &s, neo::matrix_fx_config &m_fx_cfg);
@@ -136,6 +137,6 @@ namespace neo {
         std::scoped_lock lock{_matrix_mutex};
         return _matrix;
     }
-}
+}// namespace neo
 
-#endif //NEO_MATRIX_FX_HPP
+#endif//NEO_MATRIX_FX_HPP

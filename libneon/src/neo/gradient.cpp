@@ -2,11 +2,11 @@
 // Created by spak on 6/5/21.
 //
 
-#include <neo/gradient.hpp>
 #include <cassert>
 #include <cmath>
-#include <sstream>
 #include <iomanip>
+#include <neo/gradient.hpp>
+#include <sstream>
 
 namespace neo {
 
@@ -40,7 +40,7 @@ namespace neo {
                 return (*this)(l.time(), r.time());
             }
         };
-    }
+    }// namespace
 
     gradient::const_iterator gradient::lower_bound(float t) const {
         return std::lower_bound(std::begin(*this), std::end(*this), t, safe_less{});
@@ -51,7 +51,7 @@ namespace neo {
     }
 
     std::pair<gradient::iterator, bool> gradient::emplace(gradient_entry entry) {
-        auto convert_it = [&] (auto entries_it) {
+        auto convert_it = [&](auto entries_it) {
             return std::begin(*this) + std::distance(std::begin(_entries), entries_it);
         };
 
@@ -69,7 +69,7 @@ namespace neo {
         return {convert_it(it), true};
     }
 
-    void  gradient::normalize() {
+    void gradient::normalize() {
         if (empty()) {
             return;
         } else if (size() == 1) {
@@ -97,11 +97,11 @@ namespace neo {
         return l.blend(r, t);
     }
 
-    rgb blend_round_down(rgb l, rgb , float) {
+    rgb blend_round_down(rgb l, rgb, float) {
         return l;
     }
 
-    rgb blend_round_up(rgb , rgb r, float) {
+    rgb blend_round_up(rgb, rgb r, float) {
         return r;
     }
 
@@ -121,7 +121,7 @@ namespace neo {
         buffer.clear();
         buffer.resize(attempt_snprintf(nullptr) + 1 /* null terminator */, '\0');
         attempt_snprintf(&buffer);
-        buffer.resize(buffer.size() - 1); // Remove null terminator
+        buffer.resize(buffer.size() - 1);// Remove null terminator
         return buffer;
     }
 
@@ -211,7 +211,7 @@ namespace neo {
         }
         normalize();
     }
-}
+}// namespace neo
 
 namespace mlab {
 
@@ -222,7 +222,7 @@ namespace mlab {
         [[nodiscard]] float byte_to_unit_float(std::uint8_t b) {
             return float(b) / 255.f;
         }
-    }
+    }// namespace
 
     bin_stream &operator>>(bin_stream &i, neo::gradient_entry &ge) {
         std::uint8_t t = 0;
@@ -259,4 +259,4 @@ namespace mlab {
         }
         return i;
     }
-}
+}// namespace mlab

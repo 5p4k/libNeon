@@ -5,10 +5,10 @@
 #ifndef NEO_LED_HPP
 #define NEO_LED_HPP
 
+#include <algorithm>
+#include <array>
 #include <neo/color.hpp>
 #include <neo/gamma.hpp>
-#include <array>
-#include <algorithm>
 
 namespace neo {
 
@@ -23,14 +23,14 @@ namespace neo {
         std::uint8_t value = 0;
     };
 
-    template <led_channel Channel, led_channel ...Channels>
+    template <led_channel Channel, led_channel... Channels>
     struct channel_pack : public channel_storage<Channel>, public channel_pack<Channels...> {
     };
 
     template <led_channel Channel>
     struct channel_pack<Channel> : public channel_storage<Channel> {};
 
-    template <led_channel ...Channels>
+    template <led_channel... Channels>
     class led : private channel_pack<Channels...> {
     public:
         led() = default;
@@ -57,23 +57,23 @@ namespace neo {
     using grb_led = led<led_channel::green, led_channel::red, led_channel::blue>;
     using rgb_led = led<led_channel::red, led_channel::green, led_channel::blue>;
 
-}
+}// namespace neo
 
 namespace neo {
 
-    template <led_channel ...Channels>
+    template <led_channel... Channels>
     template <led_channel Channel>
     void led<Channels...>::set(std::uint8_t v) {
         channel_storage<Channel>::value = v;
     }
 
-    template <led_channel ...Channels>
+    template <led_channel... Channels>
     template <led_channel Channel>
     std::uint8_t led<Channels...>::get() const {
         return channel_storage<Channel>::value;
     }
 
-    template <led_channel ...Channels>
+    template <led_channel... Channels>
     void led<Channels...>::set(led_channel chn, std::uint8_t v) {
         switch (chn) {
             case led_channel::red:
@@ -90,7 +90,7 @@ namespace neo {
         }
     }
 
-    template <led_channel ...Channels>
+    template <led_channel... Channels>
     std::uint8_t led<Channels...>::get(led_channel chn) const {
         switch (chn) {
             case led_channel::red:
@@ -104,7 +104,7 @@ namespace neo {
         }
     }
 
-    template <led_channel ...Channels>
+    template <led_channel... Channels>
     void led<Channels...>::set_color(rgb c, const gamma_table *table) {
         if (table != nullptr) {
             set<led_channel::red>((*table)[c.r]);
@@ -117,12 +117,12 @@ namespace neo {
         }
     }
 
-    template <led_channel ...Channels>
+    template <led_channel... Channels>
     led<Channels...>::led(rgb c, gamma_table const *table) : led{} {
         set_color(c, table);
     }
 
-    template <led_channel ...Channels>
+    template <led_channel... Channels>
     rgb led<Channels...>::get_color(gamma_table const *table) const {
         if (table != nullptr) {
             return {table->reverse_lookup(get<led_channel::red>()),
@@ -135,6 +135,6 @@ namespace neo {
         }
     }
 
-}
+}// namespace neo
 
-#endif //NEO_LED_HPP
+#endif//NEO_LED_HPP

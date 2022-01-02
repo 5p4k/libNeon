@@ -27,19 +27,17 @@ namespace neo {
         static constexpr auto ws2811_1l = 1300ns;
 
         [[nodiscard]] rmt_item32_s make_rmt_item_bit(nanosec h, nanosec l, std::uint32_t hz, bool inverted) {
-            return rmt_item32_s{{{
-                    .duration0 = std::uint32_t(double(h.count()) * hz * 1.e-9),
-                    .level0 = inverted ? 0u : 1u,
-                    .duration1 = std::uint32_t(double(l.count()) * hz * 1.e-9),
-                    .level1 = inverted ? 1u : 0u
-            }}};
+            return rmt_item32_s{{{.duration0 = std::uint32_t(double(h.count()) * hz * 1.e-9),
+                                  .level0 = inverted ? 0u : 1u,
+                                  .duration1 = std::uint32_t(double(l.count()) * hz * 1.e-9),
+                                  .level1 = inverted ? 1u : 0u}}};
         }
-    }
+    }// namespace timings
 
     static constexpr auto rmt_config_neopixel_default = rmt_config_t{
             .rmt_mode = RMT_MODE_TX,
-            .channel = RMT_CHANNEL_MAX, // Replace with actual channel
-            .gpio_num = GPIO_NUM_MAX,   // Replace with actual GPIO
+            .channel = RMT_CHANNEL_MAX,// Replace with actual channel
+            .gpio_num = GPIO_NUM_MAX,  // Replace with actual GPIO
             .clk_div = 2,
             .mem_block_num = 1,
             .flags = 0,
@@ -51,8 +49,7 @@ namespace neo {
                     .carrier_en = false,
                     .loop_en = false,
                     .idle_output_en = true,
-            }
-    };
+            }};
 
     const char *to_string(controller c) {
         switch (c) {
@@ -88,9 +85,8 @@ namespace neo {
     }
 
 
-    rmt_manager::rmt_manager(rmt_config_t config, bool manage_driver) :
-            _channel{config.channel},
-            _manage_driver{manage_driver} {
+    rmt_manager::rmt_manager(rmt_config_t config, bool manage_driver) : _channel{config.channel},
+                                                                        _manage_driver{manage_driver} {
         if (_manage_driver) {
             if (const auto err = rmt_driver_install(config.channel, 0, 0); err != ESP_OK) {
                 ESP_LOGE(RMT_NEOPX_TAG, "rmt_driver_install: failed with status %s", esp_err_to_name(err));
@@ -134,4 +130,4 @@ namespace neo {
         }
     }
 
-}
+}// namespace neo

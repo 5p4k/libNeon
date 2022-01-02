@@ -2,11 +2,11 @@
 // Created by spak on 9/23/21.
 //
 
-#include <neo/gamma.hpp>
-#include <neo/color.hpp>
-#include <cmath>
 #include <algorithm>
+#include <cmath>
 #include <mutex>
+#include <neo/color.hpp>
+#include <neo/gamma.hpp>
 
 namespace neo {
 
@@ -19,11 +19,10 @@ namespace neo {
         return gamma_table{table};
     }
 
-    gamma_table_cache::gamma_table_cache(unsigned precision) :
-        _gamma_to_table{},
-        _gamma_multiplier{std::pow(10.f, float(precision))},
-        _lookup_mutex{}
-    {}
+    gamma_table_cache::gamma_table_cache(unsigned precision)
+        : _gamma_to_table{},
+          _gamma_multiplier{std::pow(10.f, float(precision))},
+          _lookup_mutex{} {}
 
     gamma_table const &gamma_table_cache::operator[](float gamma) {
         const auto key = gamma_to_key(gamma);
@@ -48,4 +47,4 @@ namespace neo {
         static gamma_table_cache _cache{};
         return _cache[gamma];
     }
-}
+}// namespace neo

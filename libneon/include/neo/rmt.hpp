@@ -27,6 +27,7 @@ namespace neo {
     class rmt_manager {
         rmt_channel_t _channel = RMT_CHANNEL_MAX;
         bool _manage_driver = false;
+
     public:
         rmt_manager() = default;
         rmt_manager(rmt_config_t config, bool manage_driver);
@@ -42,7 +43,7 @@ namespace neo {
         ~rmt_manager();
     };
 
-}
+}// namespace neo
 
 namespace neo {
 
@@ -50,6 +51,6 @@ namespace neo {
         return _channel;
     }
 
-}
+}// namespace neo
 
-#endif //NEO_RMT_HPP
+#endif//NEO_RMT_HPP

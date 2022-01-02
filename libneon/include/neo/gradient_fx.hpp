@@ -5,12 +5,12 @@
 #ifndef NEO_GRADIENT_FX_HPP
 #define NEO_GRADIENT_FX_HPP
 
-#include <neo/gradient.hpp>
-#include <neo/strip.hpp>
 #include <chrono>
 #include <functional>
-#include <mlab/unique_tracker.hpp>
 #include <mlab/bin_data.hpp>
+#include <mlab/unique_tracker.hpp>
+#include <neo/gradient.hpp>
+#include <neo/strip.hpp>
 
 namespace neo {
     namespace {
@@ -22,6 +22,7 @@ namespace neo {
         std::chrono::milliseconds _duration = 0ms;
         float _repeats = 1.f;
         mutable std::recursive_mutex _gradient_mutex = {};
+
     public:
         gradient_fx() = default;
 
@@ -38,7 +39,8 @@ namespace neo {
         inline void set_repeats(float n);
         inline void set_duration(std::chrono::milliseconds d);
 
-        [[nodiscard]] std::vector<rgb> sample(std::size_t n_leds, std::chrono::milliseconds time_since_start, std::vector<rgb> recycle_buffer = {}, blending_method method = blend_linear) const;
+        [[nodiscard]] std::vector<rgb> sample(std::size_t n_leds, std::chrono::milliseconds time_since_start,
+                                              std::vector<rgb> recycle_buffer = {}, blending_method method = blend_linear) const;
 
         [[nodiscard]] std::function<void(std::chrono::milliseconds)> make_steady_timer_callback(
                 transmittable_rgb_strip &strip, rmt_channel_t channel, blending_method method = blend_linear) const;
@@ -59,17 +61,16 @@ namespace neo {
 
         [[nodiscard]] std::string to_string() const;
     };
-}
+}// namespace neo
 
 namespace mlab {
     mlab::bin_stream &operator>>(mlab::bin_stream &s, neo::gradient_fx_config &g_fx_cfg);
 }
 namespace neo {
-    gradient_fx::gradient_fx(neo::gradient g, std::chrono::milliseconds duration, float repeats) :
-        _gradient{std::move(g)},
-        _duration{duration},
-        _repeats{repeats}
-    {}
+    gradient_fx::gradient_fx(neo::gradient g, std::chrono::milliseconds duration, float repeats)
+        : _gradient{std::move(g)},
+          _duration{duration},
+          _repeats{repeats} {}
 
     std::chrono::milliseconds gradient_fx::duration() const {
         return _duration;
@@ -97,6 +98,6 @@ namespace neo {
         _repeats = n;
     }
 
-}
+}// namespace neo
 
-#endif //NEO_GRADIENT_FX_HPP
+#endif//NEO_GRADIENT_FX_HPP

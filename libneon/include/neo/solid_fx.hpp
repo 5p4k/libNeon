@@ -5,16 +5,17 @@
 #ifndef NEO_SOLID_FX_HPP
 #define NEO_SOLID_FX_HPP
 
-#include <mlab/unique_tracker.hpp>
-#include <neo/strip.hpp>
-#include <mutex>
 #include <mlab/bin_data.hpp>
+#include <mlab/unique_tracker.hpp>
+#include <mutex>
+#include <neo/strip.hpp>
 
 namespace neo {
 
     class solid_fx : public mlab::uniquely_tracked {
         neo::rgb _color;
         mutable std::recursive_mutex _color_mutex;
+
     public:
         inline explicit solid_fx(neo::rgb color = neo::rgb{0, 0, 0});
 
@@ -42,7 +43,7 @@ namespace neo {
 
         [[nodiscard]] std::string to_string() const;
     };
-}
+}// namespace neo
 
 
 namespace mlab {
@@ -67,6 +68,6 @@ namespace neo {
     void solid_fx_config::apply(solid_fx &s_fx) const {
         s_fx.set_color(color);
     }
-}
+}// namespace neo
 
-#endif //NEO_SOLID_FX_HPP
+#endif//NEO_SOLID_FX_HPP

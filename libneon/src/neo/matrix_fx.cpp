@@ -2,23 +2,23 @@
 // Created by spak on 10/6/21.
 //
 
-#include <neo/matrix_fx.hpp>
 #include <algorithm>
 #include <mlab/mutex.hpp>
+#include <neo/matrix_fx.hpp>
 
 namespace neo {
 
     matrix_fx::matrix_fx(std::vector<neo::rgb> matrix, std::size_t width, std::chrono::milliseconds duration_x,
-                         std::chrono::milliseconds duration_y, float repeats_x) :
-            _width{0},
-            _height{0},
-            _duration_x{duration_x},
-            _duration_y{duration_y},
-            _repeats_x{repeats_x} {
+                         std::chrono::milliseconds duration_y, float repeats_x)
+        : _width{0},
+          _height{0},
+          _duration_x{duration_x},
+          _duration_y{duration_y},
+          _repeats_x{repeats_x} {
         set_matrix(std::move(matrix), width);
     }
 
-    matrix_fx::matrix_fx(matrix_fx &&other) noexcept: matrix_fx{} {
+    matrix_fx::matrix_fx(matrix_fx &&other) noexcept : matrix_fx{} {
         *this = std::move(other);
     }
 
@@ -63,8 +63,7 @@ namespace neo {
         return method(
                 method(_matrix.at(llc_idx), _matrix.at(lrc_idx), dx),
                 method(_matrix.at(ulc_idx), _matrix.at(urc_idx), dx),
-                dy
-        );
+                dy);
     }
 
     void matrix_fx::set_matrix(std::vector<rgb> m, std::size_t w) {
@@ -131,15 +130,15 @@ namespace neo {
         // Get the fractional cycle time at the first led
         // TODO Fix this also in gradient_fx
         const float tx0 = duration_x().count() > 0
-                          ? float(time_since_start.count() % duration_x().count()) / float(duration_x().count())
-                          : 0.f;
+                                  ? float(time_since_start.count() % duration_x().count()) / float(duration_x().count())
+                                  : 0.f;
         const float ty = duration_y().count() > 0
-                         ? float(time_since_start.count() % duration_y().count()) / float(duration_y().count())
-                         : 0.f;
+                                 ? float(time_since_start.count() % duration_y().count()) / float(duration_y().count())
+                                 : 0.f;
         // Compute the time increment for each led
         const float dtx = n_leds > 0
-                          ? repeats_x() / float(n_leds)
-                          : 0.f;
+                                  ? repeats_x() / float(n_leds)
+                                  : 0.f;
         // We are sampling a horizontal strip so y gets special treatment and does not get repeated
 
         for (std::size_t i = 0; i < recycle_buffer.size(); ++i) {
@@ -162,14 +161,13 @@ namespace neo {
         buffer.clear();
         buffer.resize(attempt_snprintf(nullptr) + 1 /* null terminator */, '\0');
         attempt_snprintf(&buffer);
-        buffer.resize(buffer.size() - 1); // Remove null terminator
+        buffer.resize(buffer.size() - 1);// Remove null terminator
         return buffer;
     }
 
     std::vector<rgb> matrix_fx::render_frame(transmittable_rgb_strip &strip, rmt_channel_t channel,
                                              std::chrono::milliseconds elapsed, std::vector<rgb> recycle_buffer,
-                                             blending_method method) const
-    {
+                                             blending_method method) const {
         // Quickly try to lock, if fails, just drop frame
         mlab::scoped_try_lock lock{_matrix_mutex};
         if (lock) {
@@ -184,8 +182,7 @@ namespace neo {
 
     std::function<void(std::chrono::milliseconds)> matrix_fx::make_steady_timer_callback(
             transmittable_rgb_strip &strip, rmt_channel_t channel, blending_method method) const {
-        return [buffer = std::vector<rgb>{}, &strip, channel, method, tracker = tracker()]
-                (std::chrono::milliseconds elapsed) mutable {
+        return [buffer = std::vector<rgb>{}, &strip, channel, method, tracker = tracker()](std::chrono::milliseconds elapsed) mutable {
             // Do not capture this, to enable movement of the object
             if (auto *m_fx = mlab::uniquely_tracked::track<matrix_fx>(tracker); m_fx != nullptr) {
                 buffer = m_fx->render_frame(strip, channel, elapsed, std::move(buffer), method);
@@ -204,7 +201,7 @@ namespace neo {
         m_fx.set_duration_y(std::chrono::milliseconds{duration_y_ms});
     }
 
-}
+}// namespace neo
 
 namespace mlab {
     mlab::bin_stream &operator>>(mlab::bin_stream &s, neo::matrix_fx_config &m_fx_cfg) {
@@ -234,4 +231,4 @@ namespace mlab {
         s >> lsb32 >> m_fx_cfg.duration_y_ms;
         return s;
     }
-}
+}// namespace mlab

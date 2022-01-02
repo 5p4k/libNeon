@@ -2,8 +2,8 @@
 // Created by spak on 6/4/21.
 //
 
-#include <neo/color.hpp>
 #include <cmath>
+#include <neo/color.hpp>
 #include <vector>
 
 namespace neo {
@@ -12,7 +12,7 @@ namespace neo {
         std::array<std::uint8_t, 3> f3_linear_to_srgb(std::array<float, 3> f) {
             return {linear_to_srgb(f[0]), linear_to_srgb(f[1]), linear_to_srgb(f[2])};
         }
-    }
+    }// namespace
 
     float srgb_to_linear(std::uint8_t v) {
         const float f = float(v) / 255.f;
@@ -37,7 +37,7 @@ namespace neo {
         buffer.clear();
         buffer.resize(attempt_snprintf(nullptr) + 1 /* null terminator */, '\0');
         attempt_snprintf(&buffer);
-        buffer.resize(buffer.size() - 1); // Remove null terminator
+        buffer.resize(buffer.size() - 1);// Remove null terminator
         return buffer;
     }
 
@@ -150,7 +150,7 @@ namespace neo {
         return *this;
     }
 
-}
+}// namespace neo
 
 namespace mlab {
 
@@ -161,4 +161,4 @@ namespace mlab {
     bin_stream &operator>>(bin_stream &i, neo::rgb &c) {
         return i >> c.r >> c.g >> c.b;
     }
-}
+}// namespace mlab

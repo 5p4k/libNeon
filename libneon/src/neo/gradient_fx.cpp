@@ -2,9 +2,9 @@
 // Created by spak on 6/6/21.
 //
 
-#include <neo/gradient_fx.hpp>
-#include <mlab/mutex.hpp>
 #include <cmath>
+#include <mlab/mutex.hpp>
+#include <neo/gradient_fx.hpp>
 
 namespace neo {
 
@@ -37,8 +37,7 @@ namespace neo {
 
 
     std::vector<rgb> gradient_fx::render_frame(transmittable_rgb_strip &strip, rmt_channel_t channel, std::chrono::milliseconds elapsed,
-                                  std::vector<rgb> recycle_buffer, blending_method method) const
-    {
+                                               std::vector<rgb> recycle_buffer, blending_method method) const {
         // Quickly try to lock, if fails, just drop frame
         mlab::scoped_try_lock lock{_gradient_mutex};
         if (lock) {
@@ -52,11 +51,8 @@ namespace neo {
     }
 
     std::function<void(std::chrono::milliseconds)> gradient_fx::make_steady_timer_callback(
-            transmittable_rgb_strip &strip, rmt_channel_t channel, blending_method method) const
-    {
-        return [buffer = std::vector<rgb>{}, &strip, channel, method, tracker = tracker()]
-            (std::chrono::milliseconds elapsed) mutable
-        {
+            transmittable_rgb_strip &strip, rmt_channel_t channel, blending_method method) const {
+        return [buffer = std::vector<rgb>{}, &strip, channel, method, tracker = tracker()](std::chrono::milliseconds elapsed) mutable {
             // Do not capture this, to enable movement of the object
             if (auto *g_fx = mlab::uniquely_tracked::track<gradient_fx>(tracker); g_fx != nullptr) {
                 buffer = g_fx->render_frame(strip, channel, elapsed, std::move(buffer), method);
@@ -84,14 +80,14 @@ namespace neo {
         buffer.clear();
         buffer.resize(attempt_snprintf(nullptr) + 1 /* null terminator */, '\0');
         attempt_snprintf(&buffer);
-        buffer.resize(buffer.size() - 1); // Remove null terminator
+        buffer.resize(buffer.size() - 1);// Remove null terminator
         return buffer;
     }
-}
+}// namespace neo
 
 namespace mlab {
 
     mlab::bin_stream &operator>>(mlab::bin_stream &s, neo::gradient_fx_config &g_fx_cfg) {
         return s >> g_fx_cfg.gradient >> lsb_auto >> g_fx_cfg.repeats >> lsb32 >> g_fx_cfg.duration_ms;
     }
-}
+}// namespace mlab

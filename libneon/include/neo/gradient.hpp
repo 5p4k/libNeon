@@ -5,9 +5,9 @@
 #ifndef NEO_GRADIENT_HPP
 #define NEO_GRADIENT_HPP
 
+#include <mlab/bin_data.hpp>
 #include <neo/color.hpp>
 #include <vector>
-#include <mlab/bin_data.hpp>
 
 namespace neo {
     using blending_method = rgb (&)(rgb l, rgb r, float t);
@@ -19,12 +19,12 @@ namespace neo {
 
     class gradient_entry;
     class fixed_gradient_entry;
-}
+}// namespace neo
 
 namespace mlab {
     bin_stream &operator>>(bin_stream &i, neo::gradient_entry &ge);
     bin_data &operator<<(bin_data &o, neo::fixed_gradient_entry const &fge);
-}
+}// namespace mlab
 
 namespace neo {
 
@@ -38,6 +38,7 @@ namespace neo {
         fixed_gradient_entry &operator=(fixed_gradient_entry &&) noexcept = default;
 
         friend mlab::bin_stream &mlab::operator>>(mlab::bin_stream &, neo::gradient_entry &);
+
     public:
         [[nodiscard]] inline float time() const;
 
@@ -61,12 +62,13 @@ namespace neo {
     class gradient_entry : protected fixed_gradient_entry {
         friend class gradient;
         friend mlab::bin_stream &mlab::operator>>(mlab::bin_stream &, gradient_entry &);
+
     public:
         using fixed_gradient_entry::fixed_gradient_entry;
         using fixed_gradient_entry::operator=;
-        using fixed_gradient_entry::time;
         using fixed_gradient_entry::color;
         using fixed_gradient_entry::set_color;
+        using fixed_gradient_entry::time;
 
         inline void set_time(float t);
 
@@ -83,6 +85,7 @@ namespace neo {
 
     class gradient {
         std::vector<gradient_entry> _entries;
+
     public:
         using iterator = gradient_entry *;
         using const_iterator = fixed_gradient_entry const *;
@@ -136,12 +139,12 @@ namespace neo {
 
         [[nodiscard]] std::string to_string() const;
     };
-}
+}// namespace neo
 
 namespace mlab {
     bin_data &operator<<(bin_data &o, neo::gradient const &g);
     bin_stream &operator>>(bin_stream &i, neo::gradient &g);
-}
+}// namespace mlab
 
 namespace neo {
     bool gradient::empty() const {
@@ -199,7 +202,7 @@ namespace neo {
         return _color;
     }
 
-    fixed_gradient_entry & fixed_gradient_entry::operator=(rgb c) {
+    fixed_gradient_entry &fixed_gradient_entry::operator=(rgb c) {
         set_color(c);
         return *this;
     }
@@ -218,5 +221,5 @@ namespace neo {
     fixed_gradient_entry &gradient::operator[](std::size_t i) {
         return _entries.at(i);
     }
-}
-#endif //NEO_GRADIENT_HPP
+}// namespace neo
+#endif//NEO_GRADIENT_HPP

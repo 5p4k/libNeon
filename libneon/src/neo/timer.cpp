@@ -2,32 +2,28 @@
 // Created by spak on 6/7/21.
 //
 
-#include <neo/timer.hpp>
 #include <esp_log.h>
+#include <neo/timer.hpp>
 
 
 namespace neo {
 
     namespace {
-        constexpr std::array<std::array<const char *, TIMER_MAX>, TIMER_GROUP_MAX> timer_desc{{
-              {{"NEO Timer 0:0", "NEO Timer 0:1"}},
-              {{"NEO Timer 1:0", "NEO Timer 1:1"}}
-        }};
+        constexpr std::array<std::array<const char *, TIMER_MAX>, TIMER_GROUP_MAX> timer_desc{{{{"NEO Timer 0:0", "NEO Timer 0:1"}},
+                                                                                               {{"NEO Timer 1:0", "NEO Timer 1:1"}}}};
     }
 
     generic_timer::generic_timer(std::chrono::milliseconds period,
                                  std::function<void(generic_timer &)> cbk, BaseType_t core_affinity,
                                  timer_idx_t timer_idx,
-                                 timer_group_t timer_group) :
-            _cfg{timer_config_default},
-            _group{timer_group},
-            _idx{timer_idx},
-            _core_affinity{core_affinity},
-            _cbk{std::move(cbk)},
-            _cbk_task{nullptr},
-            _period{period},
-            _active{false}
-    {
+                                 timer_group_t timer_group) : _cfg{timer_config_default},
+                                                              _group{timer_group},
+                                                              _idx{timer_idx},
+                                                              _core_affinity{core_affinity},
+                                                              _cbk{std::move(cbk)},
+                                                              _cbk_task{nullptr},
+                                                              _period{period},
+                                                              _active{false} {
         ESP_LOGD("TIMER", "Creating timer %d:%d with period %lld", group(), index(), period.count());
         ESP_ERROR_CHECK(timer_init(group(), index(), &_cfg));
         ESP_ERROR_CHECK(timer_set_counter_value(group(), index(), 0));
@@ -50,7 +46,7 @@ namespace neo {
         return *this;
     }
 
-    generic_timer::generic_timer(generic_timer &&t) noexcept: generic_timer{} {
+    generic_timer::generic_timer(generic_timer &&t) noexcept : generic_timer{} {
         *this = std::move(t);
     }
 
@@ -128,7 +124,7 @@ namespace neo {
         if (auto *instance = mlab::uniquely_tracked::track<generic_timer>(tracker); instance != nullptr) {
             BaseType_t high_task_awoken = pdFALSE;
             vTaskNotifyGiveFromISR(instance->_cbk_task, &high_task_awoken);
-            return high_task_awoken == pdTRUE; // Return whether we need to yield at the end of ISR
+            return high_task_awoken == pdTRUE;// Return whether we need to yield at the end of ISR
         }
         return false;
     }
@@ -163,20 +159,17 @@ namespace neo {
     steady_timer::steady_timer() : generic_timer{}, _last_start{}, _previous_laps_duration{} {}
 
     void steady_timer::elapsed_callback(generic_timer &gen_timer) {
-
-
     }
 
     steady_timer::steady_timer(std::chrono::milliseconds period, std::function<void(std::chrono::milliseconds)> cbk,
-                               BaseType_t core_affinity, timer_idx_t timer_idx, timer_group_t timer_group) :
-            generic_timer{period,
-                          [elapsed_cbk = std::move(cbk)](generic_timer &gt) {
-                              elapsed_cbk(reinterpret_cast<steady_timer *>(&gt)->elapsed());
-                          },
-                          core_affinity, timer_idx, timer_group},
-            _last_start{std::chrono::steady_clock::now()},
-            _previous_laps_duration{0ms}
-    {}
+                               BaseType_t core_affinity, timer_idx_t timer_idx, timer_group_t timer_group)
+        : generic_timer{period,
+                        [elapsed_cbk = std::move(cbk)](generic_timer &gt) {
+                            elapsed_cbk(reinterpret_cast<steady_timer *>(&gt)->elapsed());
+                        },
+                        core_affinity, timer_idx, timer_group},
+          _last_start{std::chrono::steady_clock::now()},
+          _previous_laps_duration{0ms} {}
 
     void steady_timer::start() {
         if (not is_active()) {
@@ -206,4 +199,4 @@ namespace neo {
         generic_timer::reset();
     }
 
-}
+}// namespace neo

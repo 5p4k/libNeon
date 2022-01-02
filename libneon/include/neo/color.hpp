@@ -5,9 +5,9 @@
 #ifndef NEO_COLOR_HPP
 #define NEO_COLOR_HPP
 
-#include <cstdint>
-#include <array>
 #include <algorithm>
+#include <array>
+#include <cstdint>
 #include <mlab/bin_data.hpp>
 
 namespace neo {
@@ -18,7 +18,7 @@ namespace neo {
 
     static constexpr keep_t keep{};
 
-    template<class T>
+    template <class T>
     struct maybe_update {
         const bool update;
         T value;
@@ -29,7 +29,7 @@ namespace neo {
 
         void set(T &target) const;
 
-        template<class U>
+        template <class U>
         void add(U &target) const;
     };
 
@@ -70,7 +70,6 @@ namespace neo {
         [[nodiscard]] static rgb from_linear_rgb(std::array<float, 3> const &linear_rgb);
 
         [[nodiscard]] std::string to_string() const;
-
     };
 
     struct hsv {
@@ -98,7 +97,7 @@ namespace neo {
         [[nodiscard]] rgb to_rgb() const;
     };
 
-}
+}// namespace neo
 
 namespace neo {
 
@@ -107,9 +106,9 @@ namespace neo {
     rgb::rgb(std::array<std::uint8_t, 3> rgb_) : rgb{rgb_[0], rgb_[1], rgb_[2]} {}
 
     rgb::rgb(std::uint32_t rgb_) : rgb{
-            std::uint8_t(0xff & (rgb_ >> 16)),
-            std::uint8_t(0xff & (rgb_ >> 8)),
-            std::uint8_t(0xff & rgb_)} {}
+                                           std::uint8_t(0xff & (rgb_ >> 16)),
+                                           std::uint8_t(0xff & (rgb_ >> 8)),
+                                           std::uint8_t(0xff & rgb_)} {}
 
 
     hsv::hsv(float h_, float s_, float v_) : h{h_}, s{s_}, v{v_} {}
@@ -117,21 +116,21 @@ namespace neo {
     hsv::hsv(std::array<float, 3> hsv_) : hsv{hsv_[0], hsv_[1], hsv_[2]} {}
 
 
-    template<class T>
+    template <class T>
     maybe_update<T>::maybe_update(keep_t) : update{false}, value{} {}
 
-    template<class T>
+    template <class T>
     maybe_update<T>::maybe_update(T value_) : update{true}, value{value_} {}
 
-    template<class T>
+    template <class T>
     void maybe_update<T>::set(T &target) const {
         if (update) {
             target = value;
         }
     }
 
-    template<class T>
-    template<class U>
+    template <class T>
+    template <class U>
     void maybe_update<T>::add(U &target) const {
         if (update) {
             if constexpr (not std::is_signed_v<U> and std::is_signed_v<T>) {
@@ -194,11 +193,11 @@ namespace neo {
         return retval;
     }
 
-}
+}// namespace neo
 
 namespace mlab {
     bin_data &operator<<(bin_data &o, neo::rgb c);
     bin_stream &operator>>(bin_stream &i, neo::rgb &c);
-}
+}// namespace mlab
 
-#endif //NEO_COLOR_HPP
+#endif//NEO_COLOR_HPP

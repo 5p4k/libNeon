@@ -5,15 +5,14 @@
 #ifndef NEO_TIMER_HPP
 #define NEO_TIMER_HPP
 
-#include <freertos/FreeRTOS.h>
-#include <freertos/timers.h>
+#include <chrono>
 #include <driver/timer.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
-#include <string>
-#include <chrono>
+#include <freertos/timers.h>
 #include <functional>
 #include <mlab/unique_tracker.hpp>
+#include <string>
 
 namespace neo {
 
@@ -35,8 +34,7 @@ namespace neo {
                 .intr_type = TIMER_INTR_LEVEL,
                 .counter_dir = TIMER_COUNT_UP,
                 .auto_reload = TIMER_AUTORELOAD_EN,
-                .divider = TIMER_BASE_CLK / generic_timer_base_frequency
-        };
+                .divider = TIMER_BASE_CLK / generic_timer_base_frequency};
 
         timer_config_t _cfg = timer_config_default;
         timer_group_t _group = TIMER_GROUP_MAX;
@@ -104,7 +102,6 @@ namespace neo {
         [[nodiscard]] std::chrono::milliseconds elapsed_since_last_start() const;
 
     public:
-
         using generic_timer::operator bool;
         using generic_timer::is_active;
         using generic_timer::period;
@@ -130,10 +127,9 @@ namespace neo {
         void stop() override;
 
         void reset() override;
-
     };
 
-}
+}// namespace neo
 
 namespace neo {
 
@@ -160,6 +156,6 @@ namespace neo {
     generic_timer::operator bool() const {
         return is_active();
     }
-}
+}// namespace neo
 
-#endif //NEO_TIMER_HPP
+#endif//NEO_TIMER_HPP

@@ -30,7 +30,6 @@ namespace neo {
          * The returned table implements essentially `gamma(srgb_to_linear(v))`.
          */
         [[nodiscard]] static gamma_table build(float gamma);
-
     };
 
     class gamma_table_cache {
@@ -39,6 +38,7 @@ namespace neo {
         std::mutex _lookup_mutex;
 
         [[nodiscard]] signed gamma_to_key(float gamma) const;
+
     public:
         static constexpr unsigned default_precision = 2;
 
@@ -57,7 +57,7 @@ namespace neo {
      */
     [[nodiscard]] gamma_table const &get_cached_gamma_table(float gamma);
 
-}
+}// namespace neo
 
 namespace neo {
     gamma_table::gamma_table(lut_table_t lut_) : lut{lut_} {}
@@ -65,6 +65,6 @@ namespace neo {
     std::uint8_t gamma_table::operator[](std::uint8_t v) const {
         return lut[v];
     }
-}
+}// namespace neo
 
-#endif //NEO_GAMMA_H
+#endif//NEO_GAMMA_H

@@ -2,8 +2,8 @@
 // Created by spak on 10/6/21.
 //
 
-#include <neo/solid_fx.hpp>
 #include <mlab/mutex.hpp>
+#include <neo/solid_fx.hpp>
 
 namespace neo {
 
@@ -53,10 +53,10 @@ namespace neo {
         buffer.clear();
         buffer.resize(attempt_snprintf(nullptr) + 1 /* null terminator */, '\0');
         attempt_snprintf(&buffer);
-        buffer.resize(buffer.size() - 1); // Remove null terminator
+        buffer.resize(buffer.size() - 1);// Remove null terminator
         return buffer;
     }
-}
+}// namespace neo
 
 namespace mlab {
     mlab::bin_stream &operator>>(mlab::bin_stream &s, neo::solid_fx_config &s_fx_cfg) {
@@ -67,4 +67,4 @@ namespace mlab {
         }
         return s;
     }
-}
+}// namespace mlab

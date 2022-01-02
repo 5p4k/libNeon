@@ -6,11 +6,11 @@
 #define NEO_ANY_FX_HPP
 
 #include <cstdint>
+#include <mlab/any_of.hpp>
 #include <mlab/bin_data.hpp>
 #include <neo/gradient_fx.hpp>
 #include <neo/matrix_fx.hpp>
 #include <neo/solid_fx.hpp>
-#include <mlab/any_of.hpp>
 
 namespace neo {
 
@@ -31,8 +31,8 @@ namespace neo {
         matrix_fx _m_fx{};
 
         friend class any_fx_config;
-    public:
 
+    public:
         any_fx() = default;
 
         any_fx(any_fx &&other) noexcept;
@@ -98,13 +98,12 @@ namespace neo {
     void any_fx::set_type(fx_type t) {
         _type = t;
     }
-    any_fx_config::any_fx_config() :
-        mlab::any_of<fx_type, any_fx_config_data>{any_fx_config_data<fx_type::solid>{solid_fx_config{}}}
-    {}
-}
+    any_fx_config::any_fx_config()
+        : mlab::any_of<fx_type, any_fx_config_data>{any_fx_config_data<fx_type::solid>{solid_fx_config{}}} {}
+}// namespace neo
 
 namespace mlab {
     mlab::bin_stream &operator>>(mlab::bin_stream &s, neo::any_fx_config &fx_cfg);
 }
 
-#endif //NEO_ANY_FX_HPP
+#endif//NEO_ANY_FX_HPP
