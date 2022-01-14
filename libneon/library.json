@@ -19,10 +19,37 @@
   },
   "examples": [
     {
-      "name": "Empty",
+      "name": "Simple blink each LED",
       "base": "examples",
       "files": [
-        "example.cpp",
+        "simple_blink.cpp",
+        "sdkconfig.defaults",
+        "platformio.ini"
+      ]
+    },
+    {
+      "name": "Static gradient",
+      "base": "examples",
+      "files": [
+        "static_gradient.cpp",
+        "sdkconfig.defaults",
+        "platformio.ini"
+      ]
+    },
+    {
+      "name": "Sliding gradient effect",
+      "base": "examples",
+      "files": [
+        "gradient_fx.cpp",
+        "sdkconfig.defaults",
+        "platformio.ini"
+      ]
+    },
+    {
+      "name": "Sliding matrix effect",
+      "base": "examples",
+      "files": [
+        "matrix_fx.cpp",
         "sdkconfig.defaults",
         "platformio.ini"
       ]
