@@ -9,7 +9,7 @@
 namespace neo {
 
     namespace {
-        std::array<std::uint8_t, 3> f3_linear_to_srgb(std::array<float, 3> f) {
+        rgb f3_linear_to_srgb(std::array<float, 3> f) {
             return {linear_to_srgb(f[0]), linear_to_srgb(f[1]), linear_to_srgb(f[2])};
         }
     }// namespace

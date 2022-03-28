@@ -11,7 +11,12 @@
 #include <mlab/bin_data.hpp>
 
 namespace neo {
+    struct rgb;
     struct hsv;
+
+    namespace literals {
+        inline rgb operator ""_rgb(unsigned long long int);
+    }
 
     struct keep_t {
     };
@@ -46,9 +51,7 @@ namespace neo {
 
         rgb() = default;
 
-        inline rgb(std::uint32_t rgb_);
-
-        inline rgb(std::array<std::uint8_t, 3> rgb_);
+        explicit inline rgb(std::uint32_t rgb_);
 
         inline rgb(std::uint8_t r_, std::uint8_t g_, std::uint8_t b_);
 
@@ -79,8 +82,6 @@ namespace neo {
 
         hsv() = default;
 
-        inline hsv(std::array<float, 3> hsv_);
-
         inline hsv(float h_, float s_, float v_);
 
         hsv &clamp();
@@ -101,9 +102,11 @@ namespace neo {
 
 namespace neo {
 
-    rgb::rgb(std::uint8_t r_, std::uint8_t g_, std::uint8_t b_) : r{r_}, g{g_}, b{b_} {}
+    rgb literals::operator ""_rgb(unsigned long long int c) {
+        return rgb{std::uint32_t(c)};
+    }
 
-    rgb::rgb(std::array<std::uint8_t, 3> rgb_) : rgb{rgb_[0], rgb_[1], rgb_[2]} {}
+    rgb::rgb(std::uint8_t r_, std::uint8_t g_, std::uint8_t b_) : r{r_}, g{g_}, b{b_} {}
 
     rgb::rgb(std::uint32_t rgb_) : rgb{
                                            std::uint8_t(0xff & (rgb_ >> 16)),
@@ -112,9 +115,6 @@ namespace neo {
 
 
     hsv::hsv(float h_, float s_, float v_) : h{h_}, s{s_}, v{v_} {}
-
-    hsv::hsv(std::array<float, 3> hsv_) : hsv{hsv_[0], hsv_[1], hsv_[2]} {}
-
 
     template <class T>
     maybe_update<T>::maybe_update(keep_t) : update{false}, value{} {}
