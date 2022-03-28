@@ -132,6 +132,10 @@ namespace neo {
         inline CRTPIt &operator+=(std::size_t n);
 
         inline CRTPIt &operator-=(std::size_t n);
+
+        inline CRTPIt operator+(std::size_t n) const;
+
+        inline CRTPIt operator-(std::size_t n) const;
     };
 
 
@@ -348,6 +352,22 @@ namespace neo {
     CRTPIt &strip<Led>::iterator_base<Neopix, CRTPIt>::operator-=(std::size_t n) {
         _i -= n;
         return *this;
+    }
+
+    template <class Led>
+    template <class Neopix, class CRTPIt>
+    CRTPIt strip<Led>::iterator_base<Neopix, CRTPIt>::operator+(std::size_t n) const {
+        CRTPIt copy = *reinterpret_cast<CRTPIt const *>(this);
+        copy += n;
+        return copy;
+    }
+
+    template <class Led>
+    template <class Neopix, class CRTPIt>
+    CRTPIt strip<Led>::iterator_base<Neopix, CRTPIt>::operator-(std::size_t n) const {
+        CRTPIt copy = *reinterpret_cast<CRTPIt const *>(this);
+        copy -= n;
+        return copy;
     }
 
     template <class Led>
