@@ -26,8 +26,8 @@ namespace neo {
         static constexpr auto ws2811_1h = 1200ns;
         static constexpr auto ws2811_1l = 1300ns;
 
-        [[nodiscard]] rmt_item32_s make_rmt_item_bit(nanosec h, nanosec l, std::uint32_t hz, bool inverted) {
-            return rmt_item32_s{{{.duration0 = std::uint32_t(double(h.count()) * hz * 1.e-9),
+        [[nodiscard]] rmt_item32_t make_rmt_item_bit(nanosec h, nanosec l, std::uint32_t hz, bool inverted) {
+            return rmt_item32_t{{{.duration0 = std::uint32_t(double(h.count()) * hz * 1.e-9),
                                   .level0 = inverted ? 0u : 1u,
                                   .duration1 = std::uint32_t(double(l.count()) * hz * 1.e-9),
                                   .level1 = inverted ? 1u : 0u}}};
@@ -69,7 +69,7 @@ namespace neo {
         return retval;
     }
 
-    std::pair<rmt_item32_s, rmt_item32_s> make_zero_one(rmt_manager const &manager, controller chip, bool inverted) {
+    std::pair<rmt_item32_t, rmt_item32_t> make_zero_one(rmt_manager const &manager, controller chip, bool inverted) {
         const auto clock_hz = manager.get_clock_hertz();
         switch (chip) {
             case controller::ws2811_400khz:

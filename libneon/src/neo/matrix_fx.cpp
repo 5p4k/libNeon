@@ -155,7 +155,7 @@ namespace neo {
         auto attempt_snprintf = [&](std::string *buffer) -> std::size_t {
             return std::snprintf(buffer != nullptr ? buffer->data() : nullptr,
                                  buffer != nullptr ? buffer->size() : 0,
-                                 "matrix %d×%d, %01.1f×, x %d ms, y %d ms",
+                                 "matrix %d×%d, %01.1f×, x %lu ms, y %lu ms",
                                  width, width > 0 ? matrix.size() / width : 0, repeats_x, duration_x_ms, duration_y_ms);
         };
         buffer.clear();

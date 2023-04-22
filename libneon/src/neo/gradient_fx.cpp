@@ -74,7 +74,7 @@ namespace neo {
         auto attempt_snprintf = [&](std::string *buffer) -> std::size_t {
             return std::snprintf(buffer != nullptr ? buffer->data() : nullptr,
                                  buffer != nullptr ? buffer->size() : 0,
-                                 "gradient, %01.1f×, %d ms, %s",
+                                 "gradient, %01.1f×, %lu ms, %s",
                                  repeats, duration_ms, gradient_desc.c_str());
         };
         buffer.clear();

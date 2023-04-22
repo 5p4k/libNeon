@@ -15,10 +15,10 @@
 namespace neo {
 
     template <class OutputIt>
-    OutputIt populate(OutputIt it, std::uint8_t b, rmt_item32_s zero, rmt_item32_s one);
+    OutputIt populate(OutputIt it, std::uint8_t b, rmt_item32_t zero, rmt_item32_t one);
 
     template <class OutputIt, class T, class = std::enable_if_t<not std::is_polymorphic_v<T>>>
-    OutputIt populate(OutputIt it, T const &t, rmt_item32_s zero, rmt_item32_s one);
+    OutputIt populate(OutputIt it, T const &t, rmt_item32_t zero, rmt_item32_t one);
 
     template <class Led>
     class ref;
@@ -37,12 +37,12 @@ namespace neo {
 
     template <class Led>
     class strip final : public transmittable_rgb_strip {
-        rmt_item32_s _zero;
-        rmt_item32_s _one;
+        rmt_item32_t _zero;
+        rmt_item32_t _one;
         float _gamma;
         gamma_table const *_gamma_table;
         std::vector<Led> _pixels;
-        std::vector<rmt_item32_s> _rmt_buffer;
+        std::vector<rmt_item32_t> _rmt_buffer;
 
     public:
         static constexpr float default_gamma = 2.8f;
@@ -50,7 +50,7 @@ namespace neo {
 
         static_assert(std::has_unique_object_representations_v<Led>, "The Led class will be transmitted directly");
 
-        explicit strip(std::pair<rmt_item32_s, rmt_item32_s> zero_one, std::size_t size = 0, float gamma = default_gamma);
+        explicit strip(std::pair<rmt_item32_t, rmt_item32_t> zero_one, std::size_t size = 0, float gamma = default_gamma);
 
         strip(rmt_manager const &manager, controller chip, std::size_t size = 0, bool inverted = false, float gamma = default_gamma);
 
@@ -66,9 +66,9 @@ namespace neo {
 
         class iterator;
 
-        [[nodiscard]] inline rmt_item32_s zero() const;
+        [[nodiscard]] inline rmt_item32_t zero() const;
 
-        [[nodiscard]] inline rmt_item32_s one() const;
+        [[nodiscard]] inline rmt_item32_t one() const;
 
         [[nodiscard]] inline std::size_t size() const override;
 
@@ -187,14 +187,14 @@ namespace neo {
 
     template <class Led>
     class ref : public cref<Led> {
-        std::vector<rmt_item32_s>::iterator _repr_it;
+        std::vector<rmt_item32_t>::iterator _repr_it;
         using cref<Led>::_strip;
         using cref<Led>::_cref;
 
         [[nodiscard]] inline Led &get_ref() { return const_cast<Led &>(_cref); }
 
     public:
-        explicit ref(strip<Led> const &neo, Led &ref, std::vector<rmt_item32_s>::iterator repr_it);
+        explicit ref(strip<Led> const &neo, Led &ref, std::vector<rmt_item32_t>::iterator repr_it);
 
         using cref<Led>::operator Led;
         using cref<Led>::get_color;
@@ -225,7 +225,7 @@ namespace neo {
     }
 
     template <class Led>
-    strip<Led>::strip(std::pair<rmt_item32_s, rmt_item32_s> zero_one, std::size_t size, float gamma)
+    strip<Led>::strip(std::pair<rmt_item32_t, rmt_item32_t> zero_one, std::size_t size, float gamma)
         : _zero{zero_one.first},
           _one{zero_one.second},
           _gamma{no_gamma},
@@ -442,7 +442,7 @@ namespace neo {
     cref<Led>::cref(strip<Led> const &neo, Led const &cref) : _strip{neo}, _cref{cref} {}
 
     template <class Led>
-    ref<Led>::ref(strip<Led> const &neo, Led &ref, std::vector<rmt_item32_s>::iterator repr_it)
+    ref<Led>::ref(strip<Led> const &neo, Led &ref, std::vector<rmt_item32_t>::iterator repr_it)
         : cref<Led>{neo, ref},
           _repr_it{repr_it} {}
 
@@ -469,7 +469,7 @@ namespace neo {
     }
 
     template <class OutputIt>
-    OutputIt populate(OutputIt it, std::uint8_t b, rmt_item32_s zero, rmt_item32_s one) {
+    OutputIt populate(OutputIt it, std::uint8_t b, rmt_item32_t zero, rmt_item32_t one) {
         for (std::uint8_t mask = 1 << 7; mask != 0; mask >>= 1) {
             *(it++) = (b & mask) != 0 ? one : zero;
         }
@@ -477,7 +477,7 @@ namespace neo {
     }
 
     template <class OutputIt, class T, class>
-    OutputIt populate(OutputIt it, T const &t, rmt_item32_s zero, rmt_item32_s one) {
+    OutputIt populate(OutputIt it, T const &t, rmt_item32_t zero, rmt_item32_t one) {
         auto const *byte_rep = reinterpret_cast<std::uint8_t const *>(&t);
         for (std::size_t i = 0; i < sizeof(T); ++i, ++byte_rep) {
             it = populate(it, *byte_rep, zero, one);
@@ -487,12 +487,12 @@ namespace neo {
 
 
     template <class Led>
-    rmt_item32_s strip<Led>::zero() const {
+    rmt_item32_t strip<Led>::zero() const {
         return _zero;
     }
 
     template <class Led>
-    rmt_item32_s strip<Led>::one() const {
+    rmt_item32_t strip<Led>::one() const {
         return _one;
     }
 

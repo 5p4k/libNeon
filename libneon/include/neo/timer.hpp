@@ -7,6 +7,7 @@
 
 #include <chrono>
 #include <driver/timer.h>
+#include <driver/timer_types_legacy.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
 #include <freertos/timers.h>
@@ -34,7 +35,7 @@ namespace neo {
                 .intr_type = TIMER_INTR_LEVEL,
                 .counter_dir = TIMER_COUNT_UP,
                 .auto_reload = TIMER_AUTORELOAD_EN,
-                .divider = TIMER_BASE_CLK / generic_timer_base_frequency};
+                .divider = 80'000'000 / generic_timer_base_frequency};
 
         timer_config_t _cfg = timer_config_default;
         timer_group_t _group = TIMER_GROUP_MAX;
