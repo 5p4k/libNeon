@@ -85,6 +85,13 @@ namespace neo {
 
 
         matrix_fx_config() = default;
+        matrix_fx_config(std::vector<neo::rgb> matrix_, std::uint8_t width_, float repeats_x_ = 1.f, std::uint32_t duration_x_ms_ = 0,
+                         std::uint32_t duration_y_ms_ = 5000)
+            : matrix{std::move(matrix_)},
+              width{width_},
+              repeats_x{repeats_x_},
+              duration_x_ms{duration_x_ms_},
+              duration_y_ms{duration_y_ms_} {}
 
         void apply(matrix_fx &m_fx, float tile_x = 0.1f, float tile_y = 0.1f) const;
 

@@ -44,6 +44,9 @@ namespace neo {
         [[nodiscard]] inline solid_fx const &s_fx() const;
         [[nodiscard]] inline gradient_fx const &g_fx() const;
         [[nodiscard]] inline matrix_fx const &m_fx() const;
+        [[nodiscard]] inline solid_fx &s_fx();
+        [[nodiscard]] inline gradient_fx &g_fx();
+        [[nodiscard]] inline matrix_fx &m_fx();
 
         [[nodiscard]] std::function<void(std::chrono::milliseconds)> make_steady_timer_callback(
                 transmittable_rgb_strip &strip, rmt_channel_t channel, blending_method method = blend_linear) const;
@@ -89,6 +92,16 @@ namespace neo {
         return _g_fx;
     }
     matrix_fx const &any_fx::m_fx() const {
+        return _m_fx;
+    }
+
+    solid_fx &any_fx::s_fx() {
+        return _s_fx;
+    }
+    gradient_fx &any_fx::g_fx() {
+        return _g_fx;
+    }
+    matrix_fx &any_fx::m_fx() {
         return _m_fx;
     }
 

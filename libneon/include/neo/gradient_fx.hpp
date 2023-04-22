@@ -56,6 +56,8 @@ namespace neo {
         std::uint32_t duration_ms = 1000;
 
         gradient_fx_config() = default;
+        explicit gradient_fx_config(neo::gradient g, float repeats_ = 1.f, std::uint32_t duration_ms_ = 1000)
+                : gradient{std::move(g)}, repeats{repeats_}, duration_ms{duration_ms_} {}
 
         void apply(gradient_fx &g_fx) const;
 

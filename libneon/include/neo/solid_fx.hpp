@@ -38,6 +38,7 @@ namespace neo {
         neo::rgb color = neo::rgb{0, 0, 0};
 
         solid_fx_config() = default;
+        explicit solid_fx_config(neo::rgb c) : color{c} {}
 
         inline void apply(solid_fx &s_fx) const;
 
