@@ -35,6 +35,7 @@ namespace neo {
                 .intr_type = TIMER_INTR_LEVEL,
                 .counter_dir = TIMER_COUNT_UP,
                 .auto_reload = TIMER_AUTORELOAD_EN,
+                .clk_src = TIMER_SRC_CLK_DEFAULT,
                 .divider = 80'000'000 / generic_timer_base_frequency};
 
         timer_config_t _cfg = timer_config_default;
