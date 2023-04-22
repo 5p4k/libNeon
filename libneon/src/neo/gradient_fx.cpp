@@ -12,7 +12,7 @@ namespace neo {
                                          std::vector<rgb> recycle_buffer, blending_method method) const {
         recycle_buffer.resize(n_leds);
         // Get the fractional cycle time at the first led
-        const float t0 = float(time_since_start.count() % duration().count()) / float(duration().count());
+        const float t0 = duration().count() == 0 ? 0.f : float(time_since_start.count() % duration().count()) / float(duration().count());
         // Compute the time increment for each led
         const float dt = repeats() / float(n_leds);
 
