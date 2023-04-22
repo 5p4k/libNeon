@@ -64,6 +64,10 @@ namespace neo {
         inline rgb &shift(rgb delta, bool negate = false);
         [[nodiscard]] inline rgb shift(rgb delta, bool negate = false) const;
 
+        /**
+         * @todo Deprecate and return a value
+         * @return
+         */
         rgb &blend(rgb target, float factor);
         [[nodiscard]] inline rgb blend(rgb target, float factor) const;
 
