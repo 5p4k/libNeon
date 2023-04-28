@@ -18,7 +18,7 @@ extern "C" void app_main() {
             {0xff0000_rgb, 0xffff00_rgb, 0x00ff00_rgb, 0x00ffff_rgb, 0x0000ff_rgb, 0xff00ff_rgb, 0xff0000_rgb}};
 
     neo::gradient_fx fx{rainbow, 2s};
-    neo::alarm alarm{16ms, fx.make_alarm_callback(strip, manager), 0};
+    neo::alarm alarm{60_fps, fx.make_alarm_callback(strip, manager), 0};
 
     if (const auto err = strip.transmit(manager, true); err != ESP_OK) {
         ESP_LOGE("NEO", "Trasmit failed with status %s", esp_err_to_name(err));

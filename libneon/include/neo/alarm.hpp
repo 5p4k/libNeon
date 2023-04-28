@@ -8,6 +8,15 @@
 #include <neo/timer.hpp>
 
 namespace neo {
+
+    namespace literals {
+        using namespace std::chrono_literals;
+
+        constexpr std::chrono::milliseconds operator ""_fps(unsigned long long int fps) {
+            return 1'000ms / fps;
+        }
+    }
+
     class alarm : public timer {
         std::atomic<TaskHandle_t> _cbk_task = nullptr;
         std::function<void(alarm &)> _cbk_fn = nullptr;
