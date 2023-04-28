@@ -5,15 +5,14 @@
 #ifndef NEO_TIMER_HPP
 #define NEO_TIMER_HPP
 
+#include <atomic>
 #include <chrono>
-#include <driver/timer.h>
-#include <driver/timer_types_legacy.h>
+#include <driver/gptimer.h>
 #include <freertos/FreeRTOS.h>
-#include <freertos/semphr.h>
-#include <freertos/timers.h>
+#include <freertos/task.h>
 #include <functional>
-#include <mlab/unique_tracker.hpp>
-#include <string>
+#include <memory>
+
 
 namespace neo {
 
@@ -21,143 +20,57 @@ namespace neo {
         using namespace std::chrono_literals;
     }
 
-    class generic_timer : public mlab::uniquely_tracked {
+    class timer {
+        gptimer_handle_t _hdl = nullptr;
+        bool _active = false;
+        std::chrono::milliseconds _prev_laps_duration = 0ms;
+        std::chrono::time_point<std::chrono::steady_clock> _last_start;
 
         /**
-         * We have the timer in ms, but we cannot specify a sufficiently large divider
-         * to get 1KHz, so we operate at 2KHz.
+         * - The timer must have not been set up before.
          */
-        static constexpr std::uint32_t generic_timer_base_frequency = 2'000;
+        void create_timer();
 
-        static constexpr timer_config_t timer_config_default{
-                .alarm_en = TIMER_ALARM_EN,
-                .counter_en = TIMER_PAUSE,
-                .intr_type = TIMER_INTR_LEVEL,
-                .counter_dir = TIMER_COUNT_UP,
-                .auto_reload = TIMER_AUTORELOAD_EN,
-                .clk_src = TIMER_SRC_CLK_DEFAULT,
-                .divider = 80'000'000 / generic_timer_base_frequency};
+        void delete_timer();
 
-        timer_config_t _cfg = timer_config_default;
-        timer_group_t _group = TIMER_GROUP_MAX;
-        timer_idx_t _idx = TIMER_MAX;
-        BaseType_t _core_affinity = tskNO_AFFINITY;
-        std::function<void(generic_timer &)> _cbk = nullptr;
-        TaskHandle_t _cbk_task = nullptr;
-        std::chrono::milliseconds _period = 0ms;
-        bool _active = false;
-
-        static bool IRAM_ATTR isr_callback(void *tracker);
-
-        static void cbk_task_body(void *tracker);
-
-        [[nodiscard]] static std::uint64_t get_alarm_value(std::chrono::milliseconds period);
-
-        [[nodiscard]] inline timer_group_t group() const;
-
-        [[nodiscard]] inline timer_idx_t index() const;
-
-        [[nodiscard]] inline BaseType_t core_affinity() const;
-
-        [[nodiscard]] inline bool is_valid_timer() const;
-
-        void setup_callbacks();
-
-        void teardown_callbacks();
+    protected:
+        [[nodiscard]] inline gptimer_handle_t handle() const;
 
     public:
-        generic_timer() = default;
+        static constexpr std::uint32_t resolution_hz = 1'000'000;
 
-        generic_timer(std::chrono::milliseconds period, std::function<void(generic_timer &)> cbk,
-                      BaseType_t core_affinity = tskNO_AFFINITY, timer_idx_t timer_idx = TIMER_0,
-                      timer_group_t timer_group = TIMER_GROUP_0);
+        timer() = default;
 
-        generic_timer(generic_timer const &) = delete;
+        timer(timer const &) = delete;
+        timer &operator=(timer const &) = delete;
 
-        generic_timer &operator=(generic_timer const &) = delete;
+        timer(timer &&) noexcept = delete;
+        timer &operator=(timer &&) noexcept = delete;
 
-        generic_timer &operator=(generic_timer &&t) noexcept;
-
-        generic_timer(generic_timer &&t) noexcept;
-
-        virtual ~generic_timer();
-
-        [[nodiscard]] inline std::chrono::milliseconds period() const;
+        void start();
+        void stop();
+        void reset();
 
         [[nodiscard]] inline bool is_active() const;
 
-        virtual void start();
+        [[nodiscard]] std::chrono::milliseconds lap_elapsed() const;
+        [[nodiscard]] std::chrono::milliseconds total_elapsed() const;
 
-        virtual void stop();
-
-        virtual void reset();
-
-        inline explicit operator bool() const;
-    };
-
-    class steady_timer : private generic_timer {
-        std::chrono::time_point<std::chrono::steady_clock> _last_start;
-        std::chrono::milliseconds _previous_laps_duration;
-
-        static void elapsed_callback(generic_timer &gen_timer);
-
-        [[nodiscard]] std::chrono::milliseconds elapsed_since_last_start() const;
-
-    public:
-        using generic_timer::operator bool;
-        using generic_timer::is_active;
-        using generic_timer::period;
-
-        steady_timer();
-
-        steady_timer(std::chrono::milliseconds period, std::function<void(std::chrono::milliseconds)> cbk,
-                     BaseType_t core_affinity = tskNO_AFFINITY, timer_idx_t timer_idx = TIMER_0,
-                     timer_group_t timer_group = TIMER_GROUP_0);
-
-        steady_timer(steady_timer const &) = delete;
-
-        steady_timer(steady_timer &&) noexcept = default;
-
-        steady_timer &operator=(steady_timer const &) = delete;
-
-        steady_timer &operator=(steady_timer &&) noexcept = default;
-
-        [[nodiscard]] std::chrono::milliseconds elapsed() const;
-
-        void start() override;
-
-        void stop() override;
-
-        void reset() override;
+        ~timer();
     };
 
 }// namespace neo
 
 namespace neo {
 
-    timer_group_t generic_timer::group() const {
-        return _group;
-    }
-
-    timer_idx_t generic_timer::index() const {
-        return _idx;
-    }
-
-    BaseType_t generic_timer::core_affinity() const {
-        return _core_affinity;
-    }
-
-    std::chrono::milliseconds generic_timer::period() const {
-        return _period;
-    }
-
-    bool generic_timer::is_active() const {
+    bool timer::is_active() const {
         return _active;
     }
 
-    generic_timer::operator bool() const {
-        return is_active();
+    gptimer_handle_t timer::handle() const {
+        return _hdl;
     }
+
 }// namespace neo
 
 #endif//NEO_TIMER_HPP
