@@ -9,6 +9,7 @@
 #include <mlab/unique_tracker.hpp>
 #include <mutex>
 #include <neo/strip.hpp>
+#include <neo/alarm.hpp>
 
 namespace neo {
 
@@ -27,8 +28,8 @@ namespace neo {
 
         inline void set_color(rgb c);
 
-        [[nodiscard]] std::function<void(std::chrono::milliseconds)>
-        make_steady_timer_callback(transmittable_rgb_strip &strip, rmt_channel_t channel) const;
+        [[nodiscard]] std::function<void(alarm &)>
+        make_alarm_callback(transmittable_rgb_strip &strip, rmt_channel_t channel) const;
 
         void render_frame(transmittable_rgb_strip &strip, rmt_channel_t channel) const;
     };

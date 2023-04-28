@@ -180,12 +180,12 @@ namespace neo {
         return recycle_buffer;
     }
 
-    std::function<void(std::chrono::milliseconds)> matrix_fx::make_steady_timer_callback(
+    std::function<void(alarm &)> matrix_fx::make_alarm_callback(
             transmittable_rgb_strip &strip, rmt_channel_t channel, blending_method method) const {
-        return [buffer = std::vector<rgb>{}, &strip, channel, method, tracker = tracker()](std::chrono::milliseconds elapsed) mutable {
+        return [buffer = std::vector<rgb>{}, &strip, channel, method, tracker = tracker()](alarm &a) mutable {
             // Do not capture this, to enable movement of the object
             if (auto *m_fx = mlab::uniquely_tracked::track<matrix_fx>(tracker); m_fx != nullptr) {
-                buffer = m_fx->render_frame(strip, channel, elapsed, std::move(buffer), method);
+                buffer = m_fx->render_frame(strip, channel, a.total_elapsed(), std::move(buffer), method);
             } else {
                 ESP_LOGE("NEO", "Unable to track matrix fx object.");
             }

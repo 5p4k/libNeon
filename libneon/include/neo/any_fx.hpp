@@ -48,7 +48,7 @@ namespace neo {
         [[nodiscard]] inline gradient_fx &g_fx();
         [[nodiscard]] inline matrix_fx &m_fx();
 
-        [[nodiscard]] std::function<void(std::chrono::milliseconds)> make_steady_timer_callback(
+        [[nodiscard]] std::function<void(alarm &)> make_alarm_callback(
                 transmittable_rgb_strip &strip, rmt_channel_t channel, blending_method method = blend_linear) const;
 
         std::vector<rgb> render_frame(transmittable_rgb_strip &strip, rmt_channel_t channel,

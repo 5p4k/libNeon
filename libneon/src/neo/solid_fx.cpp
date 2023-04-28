@@ -29,9 +29,9 @@ namespace neo {
         }
     }
 
-    std::function<void(std::chrono::milliseconds)> solid_fx::make_steady_timer_callback(
+    std::function<void(alarm &)> solid_fx::make_alarm_callback(
             transmittable_rgb_strip &strip, rmt_channel_t channel) const {
-        return [&strip, channel, tracker = tracker()](std::chrono::milliseconds) {
+        return [&strip, channel, tracker = tracker()](alarm &a) {
             // Do not capture this, to enable movement of the object
             if (auto *s_fx = mlab::uniquely_tracked::track<solid_fx>(tracker); s_fx != nullptr) {
                 s_fx->render_frame(strip, channel);

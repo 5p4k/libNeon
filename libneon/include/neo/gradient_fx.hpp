@@ -11,6 +11,7 @@
 #include <mlab/unique_tracker.hpp>
 #include <neo/gradient.hpp>
 #include <neo/strip.hpp>
+#include <neo/alarm.hpp>
 
 namespace neo {
     namespace {
@@ -42,7 +43,7 @@ namespace neo {
         [[nodiscard]] std::vector<rgb> sample(std::size_t n_leds, std::chrono::milliseconds time_since_start,
                                               std::vector<rgb> recycle_buffer = {}, blending_method method = blend_linear) const;
 
-        [[nodiscard]] std::function<void(std::chrono::milliseconds)> make_steady_timer_callback(
+        [[nodiscard]] std::function<void(alarm &)> make_alarm_callback(
                 transmittable_rgb_strip &strip, rmt_channel_t channel, blending_method method = blend_linear) const;
 
         std::vector<rgb> render_frame(transmittable_rgb_strip &strip, rmt_channel_t channel,
