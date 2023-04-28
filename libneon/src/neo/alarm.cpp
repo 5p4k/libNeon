@@ -21,6 +21,11 @@ namespace neo {
 
     void alarm::task_body(void *user_ctx) {
         if (auto *self = static_cast<alarm *>(user_ctx); self != nullptr) {
+            // Wait until the task is signalled a start
+            if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY) == 0) {
+                ESP_LOGE("TIMER", "Unable to take notification on task!");
+                return;
+            }
             ESP_LOGI("TIMER", "Timer running on core %d.", xPortGetCoreID());
             // Terminate when the task own pointer is set to null
             while (self->_cbk_task != nullptr) {
@@ -87,6 +92,8 @@ namespace neo {
         }
         _core_affinity = affinity;
         _cbk_task = new_task;
+        // Unlock it
+        unlock_task();
     }
 
     void alarm::setup_alarm(std::chrono::milliseconds period) {
@@ -105,7 +112,10 @@ namespace neo {
         assert(not is_active());
         const gptimer_event_callbacks_t cbk_cfg = {
                 .on_alarm = &alarm_body};
+        // The change must be performed on a disabled timer
+        ESP_ERROR_CHECK(gptimer_disable(handle()));
         ESP_ERROR_CHECK(gptimer_register_event_callbacks(handle(), &cbk_cfg, this));
+        ESP_ERROR_CHECK(gptimer_enable(handle()));
         _cbk_fn = std::move(callback);
     }
 
