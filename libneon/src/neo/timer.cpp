@@ -16,22 +16,6 @@ namespace neo {
                 .flags = {.intr_shared = false}};
     }// namespace
 
-    void timer::create_timer() {
-        assert(not _active);
-        assert(_hdl == nullptr);
-        ESP_ERROR_CHECK(gptimer_new_timer(&default_gptimer_config, &_hdl));
-        ESP_ERROR_CHECK(gptimer_enable(_hdl));
-    }
-
-    void timer::delete_timer() {
-        if (_hdl != nullptr) {
-            stop();
-            ESP_ERROR_CHECK(gptimer_disable(_hdl));
-            ESP_ERROR_CHECK(gptimer_del_timer(_hdl));
-            _hdl = nullptr;
-        }
-    }
-
     void timer::start() {
         if (not _active and _hdl != nullptr) {
             ESP_ERROR_CHECK(gptimer_start(_hdl));
@@ -70,8 +54,20 @@ namespace neo {
         return _prev_laps_duration + lap_elapsed();
     }
 
-    timer::~timer() {
-        delete_timer();
+    timer::timer()
+        : _hdl{nullptr},
+          _active{false},
+          _prev_laps_duration{0ms},
+          _last_start{std::numeric_limits<std::chrono::time_point<std::chrono::steady_clock>>::max()} {
+        ESP_ERROR_CHECK(gptimer_new_timer(&default_gptimer_config, &_hdl));
+        ESP_ERROR_CHECK(gptimer_enable(_hdl));
+    }
+
+     timer::~timer() {
+        stop();
+        ESP_ERROR_CHECK(gptimer_disable(_hdl));
+        ESP_ERROR_CHECK(gptimer_del_timer(_hdl));
+        _hdl = nullptr;
     }
 
 

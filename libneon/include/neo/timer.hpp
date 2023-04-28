@@ -21,17 +21,10 @@ namespace neo {
     }
 
     class timer {
-        gptimer_handle_t _hdl = nullptr;
-        bool _active = false;
-        std::chrono::milliseconds _prev_laps_duration = 0ms;
+        gptimer_handle_t _hdl;
+        bool _active;
+        std::chrono::milliseconds _prev_laps_duration;
         std::chrono::time_point<std::chrono::steady_clock> _last_start;
-
-        /**
-         * - The timer must have not been set up before.
-         */
-        void create_timer();
-
-        void delete_timer();
 
     protected:
         [[nodiscard]] inline gptimer_handle_t handle() const;
@@ -39,7 +32,7 @@ namespace neo {
     public:
         static constexpr std::uint32_t resolution_hz = 1'000'000;
 
-        timer() = default;
+        timer();
 
         timer(timer const &) = delete;
         timer &operator=(timer const &) = delete;
