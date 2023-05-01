@@ -10,12 +10,12 @@
 #include <vector>
 
 namespace neo {
-    using blending_method = rgb (&)(rgb l, rgb r, float t);
+    using blending_method = srgb (&)(srgb l, srgb r, float t);
 
-    [[maybe_unused]] rgb blend_linear(rgb l, rgb r, float t);
-    [[maybe_unused]] rgb blend_round_down(rgb l, rgb, float);
-    [[maybe_unused]] rgb blend_round_up(rgb, rgb r, float);
-    [[maybe_unused]] rgb blend_nearest_neighbor(rgb l, rgb r, float t);
+    [[maybe_unused]] srgb blend_linear(srgb l, srgb r, float t);
+    [[maybe_unused]] srgb blend_round_down(srgb l, srgb, float);
+    [[maybe_unused]] srgb blend_round_up(srgb, srgb r, float);
+    [[maybe_unused]] srgb blend_nearest_neighbor(srgb l, srgb r, float t);
 
     class gradient_entry;
     class fixed_gradient_entry;
@@ -31,7 +31,7 @@ namespace neo {
     class fixed_gradient_entry {
     protected:
         float _pos = 0.f;
-        rgb _color = rgb{};
+        srgb _color = srgb{};
 
         fixed_gradient_entry &operator=(fixed_gradient_entry const &) = default;
 
@@ -42,9 +42,9 @@ namespace neo {
     public:
         [[nodiscard]] inline float position() const;
 
-        [[nodiscard]] inline rgb color() const;
+        [[nodiscard]] inline srgb color() const;
 
-        inline void set_color(rgb color);
+        inline void set_color(srgb color);
 
         fixed_gradient_entry() = default;
 
@@ -52,9 +52,9 @@ namespace neo {
 
         fixed_gradient_entry(fixed_gradient_entry &&) noexcept = default;
 
-        inline fixed_gradient_entry(float t, rgb c);
+        inline fixed_gradient_entry(float t, srgb c);
 
-        inline fixed_gradient_entry &operator=(rgb c);
+        inline fixed_gradient_entry &operator=(srgb c);
 
         [[nodiscard]] std::string to_string() const;
     };
@@ -93,7 +93,7 @@ namespace neo {
         gradient() = default;
         explicit gradient(std::vector<gradient_entry> entries);
         explicit gradient(std::vector<fixed_gradient_entry> const &entries);
-        explicit gradient(std::vector<rgb> const &colors);
+        explicit gradient(std::vector<srgb> const &colors);
         explicit gradient(std::vector<hsv> const &colors);
 
         [[nodiscard]] inline std::size_t size() const;
@@ -129,8 +129,8 @@ namespace neo {
         [[nodiscard]] inline fixed_gradient_entry const &operator[](std::size_t i) const;
         [[nodiscard]] inline fixed_gradient_entry &operator[](std::size_t i);
 
-        [[nodiscard]] rgb sample(float t, blending_method method = blend_linear) const;
-        [[nodiscard]] rgb sample(float progress, float offset = 0.f, float repeat = 1.f, blending_method method = blend_linear) const;
+        [[nodiscard]] srgb sample(float t, blending_method method = blend_linear) const;
+        [[nodiscard]] srgb sample(float progress, float offset = 0.f, float repeat = 1.f, blending_method method = blend_linear) const;
 
         template <class OutputIterator>
         OutputIterator fill(OutputIterator begin, OutputIterator end, float offset = 0.f, float repeat = 1.f, blending_method method = blend_linear) const;
@@ -203,21 +203,21 @@ namespace neo {
         return _entries.back();
     }
 
-    void fixed_gradient_entry::set_color(rgb color) {
+    void fixed_gradient_entry::set_color(srgb color) {
         _color = color;
     }
 
-    fixed_gradient_entry::fixed_gradient_entry(float t, rgb c) : _pos{t}, _color{c} {}
+    fixed_gradient_entry::fixed_gradient_entry(float t, srgb c) : _pos{t}, _color{c} {}
 
     float fixed_gradient_entry::position() const {
         return _pos;
     }
 
-    rgb fixed_gradient_entry::color() const {
+    srgb fixed_gradient_entry::color() const {
         return _color;
     }
 
-    fixed_gradient_entry &fixed_gradient_entry::operator=(rgb c) {
+    fixed_gradient_entry &fixed_gradient_entry::operator=(srgb c) {
         set_color(c);
         return *this;
     }

@@ -93,19 +93,19 @@ namespace neo {
     }
 
 
-    rgb blend_linear(rgb l, rgb r, float t) {
+    srgb blend_linear(srgb l, srgb r, float t) {
         return l.blend(r, t);
     }
 
-    rgb blend_round_down(rgb l, rgb, float) {
+    srgb blend_round_down(srgb l, srgb, float) {
         return l;
     }
 
-    rgb blend_round_up(rgb, rgb r, float) {
+    srgb blend_round_up(srgb, srgb r, float) {
         return r;
     }
 
-    rgb blend_nearest_neighbor(rgb l, rgb r, float t) {
+    srgb blend_nearest_neighbor(srgb l, srgb r, float t) {
         return safe_less{}(t, 0.5f) ? l : r;
     }
 
@@ -142,7 +142,7 @@ namespace neo {
         return s;
     }
 
-    rgb gradient::sample(float progress, float offset, float repeat, blending_method method) const {
+    srgb gradient::sample(float progress, float offset, float repeat, blending_method method) const {
         // Compute the correct 0..1 offset, handling negative numbers correctly.
         float t = (progress + offset) * repeat;
         t -= std::floor(t);
@@ -150,7 +150,7 @@ namespace neo {
         return sample(t, method);
     }
 
-    rgb gradient::sample(float t, blending_method method) const {
+    srgb gradient::sample(float t, blending_method method) const {
         if (not std::isfinite(t)) {
             t = 0.f;
         }
@@ -180,7 +180,7 @@ namespace neo {
         std::sort(std::begin(_entries), std::end(_entries), safe_less{});
         normalize();
     }
-    gradient::gradient(std::vector<rgb> const &colors) {
+    gradient::gradient(std::vector<srgb> const &colors) {
         _entries.reserve(colors.size());
         float t = 0.f;
         const float dt = 1.f / float(colors.size());

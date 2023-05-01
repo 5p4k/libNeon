@@ -11,7 +11,7 @@ using namespace neo::literals;
 extern "C" void app_main() {
     neo::led_encoder encoder{neo::encoding::ws2812b, neo::make_rmt_config(strip_gpio_pin)};
 
-    auto animate = [&, i = std::size_t{0}, buffer = std::vector<neo::rgb>{strip_num_leds}](neo::alarm &a) mutable {
+    auto animate = [&, i = std::size_t{0}, buffer = std::vector<neo::srgb>{strip_num_leds}](neo::alarm &a) mutable {
         buffer[i++ % strip_num_leds] = 0x0_rgb;
         buffer[i % strip_num_leds] = 0xaaaaaa_rgb;
         ESP_ERROR_CHECK(encoder.transmit(std::begin(buffer), std::end(buffer)));

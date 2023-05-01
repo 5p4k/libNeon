@@ -12,81 +12,42 @@
 #include <mlab/bin_data.hpp>
 
 namespace neo {
-    struct rgb;
+    struct srgb;
     struct hsv;
 
     namespace literals {
-        inline rgb operator ""_rgb(unsigned long long int);
+        constexpr srgb operator""_rgb(unsigned long long int);
     }
-
-    struct keep_t {
-    };
-
-    static constexpr keep_t keep{};
-
-    template <class T>
-    struct maybe_update {
-        const bool update;
-        T value;
-
-        maybe_update(keep_t);
-
-        maybe_update(T value_);
-
-        void set(T &target) const;
-
-        template <class U>
-        void add(U &target) const;
-    };
-
-    [[nodiscard]] float srgb_to_linear(std::uint8_t v);
-    [[nodiscard]] std::uint8_t linear_to_srgb(float v);
 
     /**
      * The values are expressed in sRGB color space.
      */
-    struct rgb {
+    struct srgb {
         std::uint8_t r = 0;
         std::uint8_t g = 0;
         std::uint8_t b = 0;
 
-        rgb() = default;
+        constexpr srgb() = default;
 
-        explicit inline rgb(std::uint32_t rgb_);
+        explicit constexpr srgb(std::uint32_t rgb_);
 
-        inline rgb(std::uint8_t r_, std::uint8_t g_, std::uint8_t b_);
+        constexpr srgb(std::uint8_t r_, std::uint8_t g_, std::uint8_t b_);
 
-        rgb &update(maybe_update<std::uint8_t> r_, maybe_update<std::uint8_t> g_, maybe_update<std::uint8_t> b_);
-        [[nodiscard]] inline rgb update(maybe_update<std::uint8_t> r_, maybe_update<std::uint8_t> g_, maybe_update<std::uint8_t> b_) const;
-
-        rgb &shift(maybe_update<signed> dr, maybe_update<signed> dg, maybe_update<signed> db);
-        [[nodiscard]] inline rgb shift(maybe_update<signed> dr, maybe_update<signed> dg, maybe_update<signed> db) const;
-
-        inline rgb &shift(rgb delta, bool negate = false);
-        [[nodiscard]] inline rgb shift(rgb delta, bool negate = false) const;
-
-        /**
-         * @todo Deprecate and return a value
-         * @return
-         */
-        rgb &blend(rgb target, float factor);
-        [[nodiscard]] inline rgb blend(rgb target, float factor) const;
+        [[nodiscard]] srgb blend(srgb target, float factor) const;
+        [[nodiscard]] srgb lerp(srgb target, float factor) const;
 
         [[nodiscard]] hsv to_hsv() const;
 
-        [[nodiscard]] std::array<float, 3> to_linear_rgb() const;
-        [[nodiscard]] static rgb from_linear_rgb(std::array<float, 3> const &linear_rgb);
+
+        [[nodiscard]] static float to_linear(std::uint8_t v);
+        [[nodiscard]] static std::uint8_t from_linear(float v);
+
+        [[nodiscard]] static std::array<float, 3> to_linear(srgb const &rgb);
+        [[nodiscard]] static srgb from_linear(std::array<float, 3> const &linear_rgb);
 
         [[nodiscard]] std::string to_string() const;
 
-        [[nodiscard]] constexpr std::uint8_t operator[](channel c) const {
-            switch (c) {
-                case channel::r: return r;
-                case channel::g: return g;
-                case channel::b: return b;
-            }
-            return 0;
-        }
+        [[nodiscard]] constexpr std::uint8_t operator[](channel c) const;
     };
 
     struct hsv {
@@ -94,124 +55,46 @@ namespace neo {
         float s = 0.f;
         float v = 0.f;
 
-        hsv() = default;
+        constexpr hsv() = default;
 
-        inline hsv(float h_, float s_, float v_);
+        constexpr hsv(float h_, float s_, float v_);
 
-        hsv &clamp();
+        [[nodiscard]] hsv clamped() const;
 
-        hsv &update(maybe_update<float> h_, maybe_update<float> s_, maybe_update<float> v_);
-        [[nodiscard]] inline hsv update(maybe_update<float> h_, maybe_update<float> s_, maybe_update<float> v_) const;
-
-        hsv &shift(maybe_update<float> dh, maybe_update<float> ds, maybe_update<float> dv);
-        [[nodiscard]] inline hsv shift(maybe_update<float> dh, maybe_update<float> ds, maybe_update<float> dv) const;
-
-        inline hsv &shift(hsv delta, bool negate = false);
-        [[nodiscard]] inline hsv shift(hsv delta, bool negate = false) const;
-
-        [[nodiscard]] rgb to_rgb() const;
+        [[nodiscard]] srgb to_rgb() const;
     };
 
 }// namespace neo
 
 namespace neo {
 
-    rgb literals::operator ""_rgb(unsigned long long int c) {
-        return rgb{std::uint32_t(c)};
+    constexpr srgb literals::operator""_rgb(unsigned long long int c) {
+        return srgb{std::uint32_t(c)};
     }
 
-    rgb::rgb(std::uint8_t r_, std::uint8_t g_, std::uint8_t b_) : r{r_}, g{g_}, b{b_} {}
+    constexpr srgb::srgb(std::uint8_t r_, std::uint8_t g_, std::uint8_t b_)
+        : r{r_}, g{g_}, b{b_} {}
 
-    rgb::rgb(std::uint32_t rgb_) : rgb{
-                                           std::uint8_t(0xff & (rgb_ >> 16)),
-                                           std::uint8_t(0xff & (rgb_ >> 8)),
-                                           std::uint8_t(0xff & rgb_)} {}
+    constexpr srgb::srgb(std::uint32_t rgb_)
+        : r{std::uint8_t(0xff & (rgb_ >> 16))},
+          g{std::uint8_t(0xff & (rgb_ >> 8))},
+          b{std::uint8_t(0xff & rgb_)} {}
 
-
-    hsv::hsv(float h_, float s_, float v_) : h{h_}, s{s_}, v{v_} {}
-
-    template <class T>
-    maybe_update<T>::maybe_update(keep_t) : update{false}, value{} {}
-
-    template <class T>
-    maybe_update<T>::maybe_update(T value_) : update{true}, value{value_} {}
-
-    template <class T>
-    void maybe_update<T>::set(T &target) const {
-        if (update) {
-            target = value;
+    constexpr std::uint8_t srgb::operator[](channel c) const {
+        switch (c) {
+            case channel::r: return r;
+            case channel::g: return g;
+            case channel::b: return b;
         }
+        return 0;
     }
 
-    template <class T>
-    template <class U>
-    void maybe_update<T>::add(U &target) const {
-        if (update) {
-            if constexpr (not std::is_signed_v<U> and std::is_signed_v<T>) {
-                target = U(std::clamp(T(target + value),
-                                      T(std::numeric_limits<U>::lowest()),
-                                      T(std::numeric_limits<U>::max())));
-            } else {
-                target += value;
-            }
-        }
-    }
-
-    rgb &rgb::shift(rgb delta, bool negate) {
-        return negate ? shift(-delta.r, -delta.g, -delta.b) : shift(delta.r, delta.g, delta.b);
-    }
-
-    hsv &hsv::shift(hsv delta, bool negate) {
-        return negate ? shift(-delta.h, -delta.s, -delta.v) : shift(delta.h, delta.s, delta.v);
-    }
-
-    rgb rgb::update(maybe_update<std::uint8_t> r_, maybe_update<std::uint8_t> g_, maybe_update<std::uint8_t> b_) const {
-        rgb retval = *this;
-        retval.update(r_, g_, b_);
-        return retval;
-    }
-
-    rgb rgb::shift(maybe_update<signed> dr, maybe_update<signed> dg, maybe_update<signed> db) const {
-        rgb retval = *this;
-        retval.shift(dr, dg, db);
-        return retval;
-    }
-
-    rgb rgb::shift(rgb delta, bool negate) const {
-        rgb retval = *this;
-        retval.shift(delta, negate);
-        return retval;
-    }
-
-    hsv hsv::update(maybe_update<float> h_, maybe_update<float> s_, maybe_update<float> v_) const {
-        hsv retval = *this;
-        retval.update(h_, s_, v_);
-        return retval;
-    }
-
-    hsv hsv::shift(maybe_update<float> dh, maybe_update<float> ds, maybe_update<float> dv) const {
-        hsv retval = *this;
-        retval.shift(dh, ds, dv);
-        return retval;
-    }
-
-    hsv hsv::shift(hsv delta, bool negate) const {
-        hsv retval = *this;
-        retval.shift(delta, negate);
-        return retval;
-    }
-
-    rgb rgb::blend(rgb target, float factor) const {
-        rgb retval = *this;
-        retval.blend(target, factor);
-        return retval;
-    }
-
+    constexpr hsv::hsv(float h_, float s_, float v_) : h{h_}, s{s_}, v{v_} {}
 }// namespace neo
 
 namespace mlab {
-    bin_data &operator<<(bin_data &o, neo::rgb c);
-    bin_stream &operator>>(bin_stream &i, neo::rgb &c);
+    bin_data &operator<<(bin_data &o, neo::srgb c);
+    bin_stream &operator>>(bin_stream &i, neo::srgb &c);
 }// namespace mlab
 
 #endif//NEO_COLOR_HPP

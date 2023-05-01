@@ -14,7 +14,7 @@ extern "C" void app_main() {
     const neo::gradient rainbow{
             {0xff0000_rgb, 0xff00_rgb, 0x00ff00_rgb, 0x00ff_rgb, 0x0000ff_rgb, 0xff00ff_rgb, 0xff0000_rgb}};
 
-    std::array<neo::rgb, strip_num_leds> colors{};
+    std::array<neo::srgb, strip_num_leds> colors{};
     rainbow.fill(std::begin(colors), std::end(colors));
     ESP_ERROR_CHECK(encoder.transmit(std::begin(colors), std::end(colors)));
 
