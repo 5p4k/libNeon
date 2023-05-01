@@ -4,7 +4,7 @@
 
 #include <driver/rmt_tx.h>
 #include <esp_log.h>
-#include <neo/rmt.hpp>
+#include <neo/encoder.hpp>
 
 namespace neo {
 

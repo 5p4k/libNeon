@@ -6,6 +6,7 @@
 #define LIBNEON_CHANNEL_HPP
 
 #include <string_view>
+#include <bit>
 
 namespace neo {
 
@@ -78,36 +79,47 @@ namespace neo {
             return const_iterator{std::end(sequence)};
         }
 
-
         template <class Color, class OutputIterator>
-        [[nodiscard]] OutputIterator extract(Color const &col, OutputIterator out) const {
-            auto extractor = channel_extractor<Color>{};
-            for (auto chn : *this) {
-                *(out++) = extractor.extract(col, chn);
-            }
-            return out;
-        }
+        OutputIterator extract(Color const &col, OutputIterator out) const;
 
         template <class ColorIterator, class OutputIterator>
-        [[nodiscard]] OutputIterator extract(ColorIterator begin, ColorIterator end, OutputIterator out) const {
-            auto extractor = channel_extractor<std::iter_value_t<ColorIterator>>{};
-            for (auto it = begin; it != end; ++it) {
-                for (auto chn : *this) {
-                    *(out++) = extractor.extract(*it, chn);
-                }
-            }
-            return out;
-        }
+        OutputIterator extract(ColorIterator begin, ColorIterator end, OutputIterator out) const;
 
         template <class Color>
-        [[nodiscard]] std::vector<std::uint8_t> extract(Color const &col) const {
-            std::vector<std::uint8_t> retval;
-            retval.reserve(size());
-            extract(col, std::back_inserter(retval));
-            return retval;
-        }
+        [[nodiscard]] std::vector<std::uint8_t> extract(Color const &col) const;
     };
 
+}// namespace neo
+
+namespace neo {
+
+    template <class Color, class OutputIterator>
+    OutputIterator channel_sequence::extract(Color const &col, OutputIterator out) const {
+        auto extractor = channel_extractor<Color>{};
+        for (auto chn : *this) {
+            *(out++) = extractor.extract(col, chn);
+        }
+        return out;
+    }
+
+    template <class ColorIterator, class OutputIterator>
+    OutputIterator channel_sequence::extract(ColorIterator begin, ColorIterator end, OutputIterator out) const {
+        auto extractor = channel_extractor<std::iter_value_t<ColorIterator>>{};
+        for (auto it = begin; it != end; ++it) {
+            for (auto chn : *this) {
+                *(out++) = extractor.extract(*it, chn);
+            }
+        }
+        return out;
+    }
+
+    template <class Color>
+    std::vector<std::uint8_t> channel_sequence::extract(Color const &col) const {
+        std::vector<std::uint8_t> retval;
+        retval.reserve(size());
+        extract(col, std::back_inserter(retval));
+        return retval;
+    }
 }// namespace neo
 
 #endif//LIBNEON_CHANNEL_HPP

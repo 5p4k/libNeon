@@ -2,13 +2,13 @@
 // Created by spak on 4/28/23.
 //
 
-#ifndef LIBNEON_RMT_HPP
-#define LIBNEON_RMT_HPP
+#ifndef LIBNEON_ENCODER_HPP
+#define LIBNEON_ENCODER_HPP
 
 #include <chrono>
-#include <cmath>
 #include <driver/gpio.h>
 #include <driver/rmt_types.h>
+#include <driver/rmt_tx.h>
 #include <mlab/bin_data.hpp>
 #include <neo/channel.hpp>
 
@@ -119,4 +119,4 @@ namespace neo {
 
 }// namespace neo
 
-#endif//LIBNEON_RMT_HPP
+#endif//LIBNEON_ENCODER_HPP

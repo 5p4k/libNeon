@@ -160,6 +160,14 @@ namespace neo {
         return reuse_buffer;
     }
 
+    rgb gradient::sample(float progress, float offset, float repeat, blending_method method) const {
+        // Compute the correct 0..1 offset, handling negative numbers correctly.
+        float t = (progress + offset) * repeat;
+        t -= std::floor(t);
+        assert(-std::numeric_limits<float>::epsilon() < t and t < std::nextafter(1.f, 2.f));
+        return sample(t, method);
+    }
+
     rgb gradient::sample(float t, blending_method method) const {
         if (not std::isfinite(t)) {
             t = 0.f;

@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <array>
 #include <cstdint>
+#include <neo/channel.hpp>
 #include <mlab/bin_data.hpp>
 
 namespace neo {
@@ -77,6 +78,15 @@ namespace neo {
         [[nodiscard]] static rgb from_linear_rgb(std::array<float, 3> const &linear_rgb);
 
         [[nodiscard]] std::string to_string() const;
+
+        [[nodiscard]] constexpr std::uint8_t operator[](channel c) const {
+            switch (c) {
+                case channel::r: return r;
+                case channel::g: return g;
+                case channel::b: return b;
+            }
+            return 0;
+        }
     };
 
     struct hsv {

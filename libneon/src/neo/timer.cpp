@@ -4,6 +4,7 @@
 
 #include <esp_log.h>
 #include <neo/timer.hpp>
+#include <cmath>
 
 
 namespace neo {
@@ -52,6 +53,14 @@ namespace neo {
 
     std::chrono::milliseconds timer::total_elapsed() const {
         return _prev_laps_duration + lap_elapsed();
+    }
+
+    float timer::cycle_time(std::chrono::milliseconds wanted_period, std::chrono::milliseconds offset) const {
+        auto t = float((total_elapsed() + offset).count()) / float(wanted_period.count());
+        // This ensures it's in [0..1]
+        t -= std::floor(t);
+        assert(-std::numeric_limits<float>::epsilon() < t and t < std::nextafter(1.f, 2.f));
+        return t;
     }
 
     timer::timer()

@@ -129,13 +129,20 @@ namespace neo {
         [[nodiscard]] inline fixed_gradient_entry const &operator[](std::size_t i) const;
         [[nodiscard]] inline fixed_gradient_entry &operator[](std::size_t i);
 
-        rgb sample(float t, blending_method = blend_linear) const;
+        [[nodiscard]] rgb sample(float t, blending_method method = blend_linear) const;
+        [[nodiscard]] rgb sample(float progress, float offset = 0.f, float repeat = 1.f, blending_method method = blend_linear) const;
 
-        void sample_uniform(float period, float offset, std::vector<rgb> &buffer,
+        [[deprecated]] void sample_uniform(float period, float offset, std::vector<rgb> &buffer,
                             blending_method method = blend_linear) const;
 
-        std::vector<rgb> sample_uniform(float period, float offset, std::size_t num_samples,
+        [[deprecated]] std::vector<rgb> sample_uniform(float period, float offset, std::size_t num_samples,
                                         std::vector<rgb> reuse_buffer = {}, blending_method method = blend_linear) const;
+
+        template <class OutputIterator>
+        OutputIterator fill(OutputIterator begin, OutputIterator end, float offset = 0.f, float repeat = 1.f, blending_method method = blend_linear) const;
+
+        template <class OutputIterator>
+        OutputIterator fill_n(OutputIterator out, std::size_t num, float offset = 0.f, float repeat = 1.f, blending_method method = blend_linear) const;
 
         [[nodiscard]] std::string to_string() const;
     };
@@ -147,6 +154,20 @@ namespace mlab {
 }// namespace mlab
 
 namespace neo {
+
+    template <class OutputIterator>
+    OutputIterator gradient::fill(OutputIterator begin, OutputIterator end, float offset, float repeat, blending_method method) const {
+        return fill_n(begin, std::distance(begin, end), offset, repeat, method);
+    }
+
+    template <class OutputIterator>
+    OutputIterator gradient::fill_n(OutputIterator out, std::size_t num, float offset, float repeat, blending_method method) const {
+        for (std::size_t i = 0; i < num; ++i) {
+            *(out++) = sample(float(i) / float(num), offset, repeat, method);
+        }
+        return out;
+    }
+
     bool gradient::empty() const {
         return _entries.empty();
     }

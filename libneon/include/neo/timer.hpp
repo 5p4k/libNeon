@@ -49,6 +49,8 @@ namespace neo {
         [[nodiscard]] std::chrono::milliseconds lap_elapsed() const;
         [[nodiscard]] std::chrono::milliseconds total_elapsed() const;
 
+        [[nodiscard]] float cycle_time(std::chrono::milliseconds wanted_period, std::chrono::milliseconds offset = 0ms) const;
+
         ~timer();
     };
 
