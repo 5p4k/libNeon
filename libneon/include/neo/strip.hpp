@@ -9,7 +9,7 @@
 #include <limits>
 #include <neo/color.hpp>
 #include <neo/gamma.hpp>
-#include <neo/rmt.hpp>
+#include <neo/rmt_legacy.hpp>
 #include <vector>
 
 namespace neo {

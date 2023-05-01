@@ -1,133 +1,99 @@
 //
-// Created by spak on 6/3/21.
+// Created by spak on 4/28/23.
 //
 
-#include <neo/rmt.hpp>
-
-#include <chrono>
+#include <driver/rmt_tx.h>
 #include <esp_log.h>
-
-#define RMT_NEOPX_TAG "RMT-NEOPX"
-
+#include <neo/rmt.hpp>
 
 namespace neo {
 
-    namespace timings {
-        using namespace std::chrono_literals;
-        using nanosec = std::chrono::nanoseconds;
+    namespace {
+        constexpr rmt_copy_encoder_config_t rmt_copy_encoder_config{};
+        constexpr rmt_transmit_config_t rmt_transmit_config{.loop_count = 0, .flags = {.eot_level = 0}};
+    }// namespace
 
-        static constexpr auto ws2812_0h = 400ns;
-        static constexpr auto ws2812_0l = 850ns;
-        static constexpr auto ws2812_1h = 800ns;
-        static constexpr auto ws2812_1l = 450ns;
-
-        static constexpr auto ws2811_0h = 500ns;
-        static constexpr auto ws2811_0l = 2000ns;
-        static constexpr auto ws2811_1h = 1200ns;
-        static constexpr auto ws2811_1l = 1300ns;
-
-        [[nodiscard]] rmt_item32_t make_rmt_item_bit(nanosec h, nanosec l, std::uint32_t hz, bool inverted) {
-            return rmt_item32_t{{{.duration0 = std::uint32_t(double(h.count()) * hz * 1.e-9),
-                                  .level0 = inverted ? 0u : 1u,
-                                  .duration1 = std::uint32_t(double(l.count()) * hz * 1.e-9),
-                                  .level1 = inverted ? 1u : 0u}}};
+    esp_err_t led_encoder::transmit_raw(mlab::range<std::uint8_t const *> data) {
+        if (_rmt_chn == nullptr) {
+            return ESP_ERR_INVALID_STATE;
         }
-    }// namespace timings
-
-    static constexpr auto rmt_config_neopixel_default = rmt_config_t{
-            .rmt_mode = RMT_MODE_TX,
-            .channel = RMT_CHANNEL_MAX,// Replace with actual channel
-            .gpio_num = GPIO_NUM_MAX,  // Replace with actual GPIO
-            .clk_div = 2,
-            .mem_block_num = 1,
-            .flags = 0,
-            .tx_config = {
-                    .carrier_freq_hz = 38000,
-                    .carrier_level = RMT_CARRIER_LEVEL_HIGH,
-                    .idle_level = RMT_IDLE_LEVEL_LOW,
-                    .carrier_duty_percent = 33,
-                    .carrier_en = false,
-                    .loop_en = false,
-                    .idle_output_en = true,
-            }};
-
-    const char *to_string(controller c) {
-        switch (c) {
-            case controller::ws2811_400khz:
-                return "WS2811 (400kHz)";
-            case controller::ws2812_800khz:
-                return "WS2812 (800kHz)";
-            default:
-                return "UNKNOWN";
-        }
+        return rmt_transmit(_rmt_chn, this, data.data(), data.size(), &rmt_transmit_config);
     }
 
-    rmt_config_t make_rmt_config(rmt_channel_t channel, gpio_num_t gpio) {
-        rmt_config_t retval = rmt_config_neopixel_default;
-        retval.channel = channel;
-        retval.gpio_num = gpio;
-        return retval;
+    std::size_t led_encoder::encode(rmt_channel_handle_t tx_channel, const void *primary_data, std::size_t data_size, rmt_encode_state_t *ret_state) {
+        assert(_bytes_encoder and _bytes_encoder->encode);
+        assert(_tail_encoder and _tail_encoder->encode);
+        std::size_t encoded_symbols = 0;
+        encoded_symbols += _bytes_encoder->encode(_bytes_encoder, tx_channel, primary_data, data_size, ret_state);
+        if (ret_state != nullptr and *ret_state != RMT_ENCODING_COMPLETE) {
+            return encoded_symbols;
+        }
+        encoded_symbols += _tail_encoder->encode(_tail_encoder, tx_channel, &_reset_sym, sizeof(_reset_sym), ret_state);
+        return encoded_symbols;
     }
 
-    std::pair<rmt_item32_t, rmt_item32_t> make_zero_one(rmt_manager const &manager, controller chip, bool inverted) {
-        const auto clock_hz = manager.get_clock_hertz();
-        switch (chip) {
-            case controller::ws2811_400khz:
-                return {timings::make_rmt_item_bit(timings::ws2811_0h, timings::ws2811_0l, clock_hz, inverted),
-                        timings::make_rmt_item_bit(timings::ws2811_1h, timings::ws2811_1l, clock_hz, inverted)};
-            case controller::ws2812_800khz:
-                return {timings::make_rmt_item_bit(timings::ws2812_0h, timings::ws2812_0l, clock_hz, inverted),
-                        timings::make_rmt_item_bit(timings::ws2812_1h, timings::ws2812_1l, clock_hz, inverted)};
-            default:
-                return {{},
-                        {}};
+    esp_err_t led_encoder::reset() {
+        if (auto const r = rmt_encoder_reset(_bytes_encoder); r != ESP_OK) {
+            return r;
+        }
+        if (auto const r = rmt_encoder_reset(_tail_encoder); r != ESP_OK) {
+            return r;
+        }
+        return ESP_OK;
+    }
+
+    led_encoder::led_encoder()
+        : rmt_encoder_t{.encode = nullptr, .reset = nullptr, .del = nullptr},
+          _bytes_encoder{nullptr},
+          _tail_encoder{nullptr},
+          _reset_sym{},
+          _chn_seq{},
+          _rmt_chn{nullptr} {
+        static_assert(static_cast<rmt_encoder_t *>(static_cast<led_encoder *>(nullptr)) == static_cast<led_encoder *>(nullptr));
+    }
+
+    led_encoder::led_encoder(neo::encoding enc, gpio_num_t gpio)
+        : rmt_encoder_t{.encode = &_encode, .reset = &_reset, .del = &_del},
+          _bytes_encoder{nullptr},
+          _tail_encoder{nullptr},
+          _reset_sym{enc.rmt_reset_sym},
+          _chn_seq{enc.chn_seq},
+          _rmt_chn{nullptr} {
+        ESP_ERROR_CHECK(rmt_new_bytes_encoder(&enc.rmt_encoder_cfg, &_bytes_encoder));
+        ESP_ERROR_CHECK(rmt_new_copy_encoder(&rmt_copy_encoder_config, &_tail_encoder));
+        rmt_tx_channel_config_t config = default_rmt_config;
+        config.gpio_num = gpio;
+        ESP_ERROR_CHECK(rmt_new_tx_channel(&config, &_rmt_chn));
+        ESP_ERROR_CHECK(rmt_enable(_rmt_chn));
+    }
+
+    led_encoder::~led_encoder() {
+        if (_bytes_encoder != nullptr) {
+            ESP_ERROR_CHECK(rmt_del_encoder(_bytes_encoder));
+            _bytes_encoder = nullptr;
+        }
+        if (_tail_encoder != nullptr) {
+            ESP_ERROR_CHECK(rmt_del_encoder(_tail_encoder));
+            _tail_encoder = nullptr;
+        }
+        if (_rmt_chn != nullptr) {
+            ESP_ERROR_CHECK(rmt_disable(_rmt_chn));
+            ESP_ERROR_CHECK(rmt_del_channel(_rmt_chn));
+            _rmt_chn = nullptr;
         }
     }
 
-
-    rmt_manager::rmt_manager(rmt_config_t config, bool manage_driver) : _channel{config.channel},
-                                                                        _manage_driver{manage_driver} {
-        if (_manage_driver) {
-            if (const auto err = rmt_driver_install(config.channel, 0, 0); err != ESP_OK) {
-                ESP_LOGE(RMT_NEOPX_TAG, "rmt_driver_install: failed with status %s", esp_err_to_name(err));
-                _manage_driver = false;
-                _channel = RMT_CHANNEL_MAX;
-                return;
-            }
-        }
-        // Attempt at configuration
-        if (const auto err = rmt_config(&config); err != ESP_OK) {
-            ESP_LOGE(RMT_NEOPX_TAG, "rmt_config: failed with status %s", esp_err_to_name(err));
-            _manage_driver = false;
-            _channel = RMT_CHANNEL_MAX;
-            return;
-        }
-    }
-    rmt_manager::rmt_manager(rmt_manager &&other) noexcept {
-        *this = std::move(other);
+    esp_err_t led_encoder::_reset(rmt_encoder_t *encoder) {
+        return reinterpret_cast<led_encoder *>(encoder)->reset();
     }
 
-    rmt_manager &rmt_manager::operator=(rmt_manager &&other) noexcept {
-        std::swap(_channel, other._channel);
-        std::swap(_manage_driver, other._manage_driver);
-        return *this;
+    std::size_t led_encoder::_encode(rmt_encoder_t *encoder, rmt_channel_handle_t tx_channel, const void *primary_data, std::size_t data_size, rmt_encode_state_t *ret_state) {
+        return reinterpret_cast<led_encoder *>(encoder)->encode(tx_channel, primary_data, data_size, ret_state);
     }
 
-
-    std::uint32_t rmt_manager::get_clock_hertz() const {
-        std::uint32_t retval = 0;
-        if (const auto err = rmt_get_counter_clock(*this, &retval); err != ESP_OK) {
-            ESP_LOGE(RMT_NEOPX_TAG, "rmt_get_counter_clock: failed with status %s", esp_err_to_name(err));
-        }
-        return retval;
-    }
-
-    rmt_manager::~rmt_manager() {
-        if (_manage_driver and *this < RMT_CHANNEL_MAX) {
-            rmt_driver_uninstall(*this);
-            _manage_driver = false;
-            _channel = RMT_CHANNEL_MAX;
-        }
+    esp_err_t led_encoder::_del(rmt_encoder_t *) {
+        ESP_LOGE("NEO", "Attempt to delete led_encoder via C API.");
+        std::abort();
     }
 
 }// namespace neo
