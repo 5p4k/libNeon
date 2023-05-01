@@ -20,7 +20,7 @@ namespace neo {
     constexpr rmt_tx_channel_config_t default_rmt_config{
             .gpio_num = -1,
             .clk_src = RMT_CLK_SRC_DEFAULT,
-            .resolution_hz = 10'000'000,// 10MHz
+            .resolution_hz = 20'000'000,// 20MHz
             .mem_block_symbols = 64,
             .trans_queue_depth = 4,
             .flags = {.invert_out = false,
@@ -59,18 +59,18 @@ namespace neo {
                            std::uint32_t resolution_hz = default_rmt_config.resolution_hz,
                            bool msb_first = true)
             : chn_seq{chn_seq_},
-              rmt_encoder_cfg{.bit0 = {.duration0 = std::uint32_t(t0h.count()) * resolution_hz / 1'000'000'000,
+              rmt_encoder_cfg{.bit0 = {.duration0 = std::uint32_t(double(t0h.count()) * double(resolution_hz) * 1.e-9),
                                        .level0 = 1,
-                                       .duration1 = std::uint32_t(t0l.count()) * resolution_hz / 1'000'000'000,
+                                       .duration1 = std::uint32_t(double(t0l.count()) * double(resolution_hz) * 1.e-9),
                                        .level1 = 0},
-                              .bit1 = {.duration0 = std::uint32_t(t1h.count()) * resolution_hz / 1'000'000'000,
+                              .bit1 = {.duration0 = std::uint32_t(double(t1h.count()) * double(resolution_hz) * 1.e-9),
                                        .level0 = 1,
-                                       .duration1 = std::uint32_t(t1l.count()) * resolution_hz / 1'000'000'000,
+                                       .duration1 = std::uint32_t(double(t1l.count()) * double(resolution_hz) * 1.e-9),
                                        .level1 = 0},
                               .flags = {.msb_first = msb_first}},
-              rmt_reset_sym{.duration0 = std::uint32_t(res.count()) * resolution_hz / 2'000'000'000,
+              rmt_reset_sym{.duration0 = std::uint32_t(double(res.count()) * double(resolution_hz) * 0.5e-9),
                             .level0 = 0,
-                            .duration1 = std::uint32_t(res.count()) * resolution_hz / 2'000'000'000,
+                            .duration1 = std::uint32_t(double(res.count()) * double(resolution_hz) * 0.5e-9),
                             .level1 = 0} {}
 
         constexpr encoding(encoding_spec spec) : encoding{spec.t0h, spec.t0l, spec.t1h, spec.t1l, spec.chn_seq, spec.res} {}
