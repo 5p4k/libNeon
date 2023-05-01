@@ -30,7 +30,7 @@ namespace neo {
 
     class fixed_gradient_entry {
     protected:
-        float _time = 0.f;
+        float _pos = 0.f;
         rgb _color = rgb{};
 
         fixed_gradient_entry &operator=(fixed_gradient_entry const &) = default;
@@ -40,7 +40,7 @@ namespace neo {
         friend mlab::bin_stream &mlab::operator>>(mlab::bin_stream &, neo::gradient_entry &);
 
     public:
-        [[nodiscard]] inline float time() const;
+        [[nodiscard]] inline float position() const;
 
         [[nodiscard]] inline rgb color() const;
 
@@ -68,9 +68,9 @@ namespace neo {
         using fixed_gradient_entry::operator=;
         using fixed_gradient_entry::color;
         using fixed_gradient_entry::set_color;
-        using fixed_gradient_entry::time;
+        using fixed_gradient_entry::position;
 
-        inline void set_time(float t);
+        inline void set_position(float t);
 
         gradient_entry() = default;
 
@@ -131,12 +131,6 @@ namespace neo {
 
         [[nodiscard]] rgb sample(float t, blending_method method = blend_linear) const;
         [[nodiscard]] rgb sample(float progress, float offset = 0.f, float repeat = 1.f, blending_method method = blend_linear) const;
-
-        [[deprecated]] void sample_uniform(float period, float offset, std::vector<rgb> &buffer,
-                            blending_method method = blend_linear) const;
-
-        [[deprecated]] std::vector<rgb> sample_uniform(float period, float offset, std::size_t num_samples,
-                                        std::vector<rgb> reuse_buffer = {}, blending_method method = blend_linear) const;
 
         template <class OutputIterator>
         OutputIterator fill(OutputIterator begin, OutputIterator end, float offset = 0.f, float repeat = 1.f, blending_method method = blend_linear) const;
@@ -213,10 +207,10 @@ namespace neo {
         _color = color;
     }
 
-    fixed_gradient_entry::fixed_gradient_entry(float t, rgb c) : _time{t}, _color{c} {}
+    fixed_gradient_entry::fixed_gradient_entry(float t, rgb c) : _pos{t}, _color{c} {}
 
-    float fixed_gradient_entry::time() const {
-        return _time;
+    float fixed_gradient_entry::position() const {
+        return _pos;
     }
 
     rgb fixed_gradient_entry::color() const {
@@ -228,12 +222,12 @@ namespace neo {
         return *this;
     }
 
-    void gradient_entry::set_time(float t) {
-        _time = t;
+    void gradient_entry::set_position(float t) {
+        _pos = t;
     }
 
     std::pair<gradient::iterator, bool> gradient::emplace(fixed_gradient_entry entry) {
-        return emplace(gradient_entry{entry.time(), entry.color()});
+        return emplace(gradient_entry{entry.position(), entry.color()});
     }
 
     fixed_gradient_entry const &gradient::operator[](std::size_t i) const {

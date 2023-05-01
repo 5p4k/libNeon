@@ -5,66 +5,27 @@
 #ifndef NEO_GAMMA_H
 #define NEO_GAMMA_H
 
-#include <array>
-#include <map>
-#include <memory>
-#include <mutex>
+#include <mlab/bin_data.hpp>
+#include <cmath>
 
 namespace neo {
-    struct gamma_table {
-        using lut_table_t = std::array<std::uint8_t, std::numeric_limits<std::uint8_t>::max() + 1>;
-        lut_table_t lut = {};
 
-        gamma_table() = default;
-        inline explicit gamma_table(lut_table_t lut_);
+    struct gamma_tag {};
 
-        [[nodiscard]] inline std::uint8_t operator[](std::uint8_t v) const;
-
-        /**
-         * @note This bisects @ref lut, so it's **very** slow.
-         */
-        [[nodiscard]] std::uint8_t reverse_lookup(std::uint8_t v) const;
-
-        /**
-         * Builds a lookup gamma table from sRGB values to the corresponding gamma-corrected intensity values.
-         * The returned table implements essentially `gamma(srgb_to_linear(v))`.
-         */
-        [[nodiscard]] static gamma_table build(float gamma);
+    struct gamma : public mlab::tagged_array<gamma_tag, std::numeric_limits<std::uint8_t>::max() + 1> {
+        using base = mlab::tagged_array<gamma_tag, std::numeric_limits<std::uint8_t>::max() + 1>;
+        explicit constexpr gamma(float g) : base{} {
+            constexpr const auto fmax = float(std::numeric_limits<std::uint8_t>::max());
+            constexpr const auto fmin = float(std::numeric_limits<std::uint8_t>::min());
+            for (std::uint8_t i = 0; i < std::uint8_t(size()); ++i) {
+                (*this)[i] = std::uint8_t(std::clamp(std::round(fmax * std::pow(srgb_to_linear(i), g)), fmin, fmax));
+            }
+        }
     };
 
-    class gamma_table_cache {
-        std::map<signed, std::unique_ptr<gamma_table>> _gamma_to_table;
-        float _gamma_multiplier;
-        std::mutex _lookup_mutex;
+    template <float Gamma>
+    static constexpr auto cached_gamma = gamma{Gamma};
 
-        [[nodiscard]] signed gamma_to_key(float gamma) const;
-
-    public:
-        static constexpr unsigned default_precision = 2;
-
-        explicit gamma_table_cache(unsigned precision = default_precision);
-
-        [[nodiscard]] gamma_table const &operator[](float gamma);
-    };
-
-    /**
-     * Looks up a cached local copy of a gamma table for the given @p gamma. Lookup is done via a @ref std::map, so
-     * it's logarithmic. Note that due to @p gamma being a floating point, the lookup is done by looking at at most
-     * gamma_table_cache::default_precision fractional decimal digits, e.g. @p gamma = 2.200 and @p gamma = 2.201 yield
-     * the same table.
-     * @return A reference to the gamma table. It is safe to store such reference, it's guaranteed to stay alive as long
-     *  as the program runs (it is stored in a `unique_ptr` inside a `static` storage duration map).
-     */
-    [[nodiscard]] gamma_table const &get_cached_gamma_table(float gamma);
-
-}// namespace neo
-
-namespace neo {
-    gamma_table::gamma_table(lut_table_t lut_) : lut{lut_} {}
-
-    std::uint8_t gamma_table::operator[](std::uint8_t v) const {
-        return lut[v];
-    }
 }// namespace neo
 
 #endif//NEO_GAMMA_H

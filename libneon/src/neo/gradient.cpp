@@ -17,27 +17,27 @@ namespace neo {
             }
 
             bool operator()(fixed_gradient_entry const &l, float r) const {
-                return (*this)(l.time(), r);
+                return (*this)(l.position(), r);
             }
 
             bool operator()(float l, fixed_gradient_entry const &r) const {
-                return (*this)(l, r.time());
+                return (*this)(l, r.position());
             }
 
             bool operator()(fixed_gradient_entry const &l, fixed_gradient_entry const &r) const {
-                return (*this)(l.time(), r.time());
+                return (*this)(l.position(), r.position());
             }
 
             bool operator()(gradient_entry const &l, float r) const {
-                return (*this)(l.time(), r);
+                return (*this)(l.position(), r);
             }
 
             bool operator()(float l, gradient_entry const &r) const {
-                return (*this)(l, r.time());
+                return (*this)(l, r.position());
             }
 
             bool operator()(gradient_entry const &l, gradient_entry const &r) const {
-                return (*this)(l.time(), r.time());
+                return (*this)(l.position(), r.position());
             }
         };
     }// namespace
@@ -55,12 +55,12 @@ namespace neo {
             return std::begin(*this) + std::distance(std::begin(_entries), entries_it);
         };
 
-        auto it = std::upper_bound(std::begin(_entries), std::end(_entries), entry.time(), safe_less{});
+        auto it = std::upper_bound(std::begin(_entries), std::end(_entries), entry.position(), safe_less{});
         if (it != std::begin(_entries)) {
             // Make sure there is no duplicate
             auto prev_it = std::prev(it);
-            if (not safe_less{}(prev_it->time(), entry.time())) {
-                assert(not safe_less{}(prev_it->time(), entry.time()) and not safe_less{}(entry.time(), prev_it->time()));
+            if (not safe_less{}(prev_it->position(), entry.position())) {
+                assert(not safe_less{}(prev_it->position(), entry.position()) and not safe_less{}(entry.position(), prev_it->position()));
                 return {convert_it(prev_it), false};
             }
         }
@@ -73,20 +73,20 @@ namespace neo {
         if (empty()) {
             return;
         } else if (size() == 1) {
-            _entries.front().set_time(0.f);
+            _entries.front().set_position(0.f);
         } else if (size() == 2) {
-            _entries.front().set_time(0.f);
-            _entries.back().set_time(1.f);
+            _entries.front().set_position(0.f);
+            _entries.back().set_position(1.f);
         } else {
-            const float min = _entries.front().time();
-            const float delta = _entries.back().time() - min;
+            const float min = _entries.front().position();
+            const float delta = _entries.back().position() - min;
             float last_time = std::numeric_limits<float>::lowest();
             for (auto &entry : _entries) {
                 // Make sure we can actually guarantee monotonicity
-                last_time = std::clamp((entry.time() - min) / delta,
+                last_time = std::clamp((entry.position() - min) / delta,
                                        std::nextafter(last_time, 2.f),
                                        1.f);
-                entry.set_time(last_time);
+                entry.set_position(last_time);
             }
             assert(std::is_sorted(std::begin(_entries), std::end(_entries), safe_less{}));
         }
@@ -116,7 +116,7 @@ namespace neo {
             return std::snprintf(buffer != nullptr ? buffer->data() : nullptr,
                                  buffer != nullptr ? buffer->size() : 0,
                                  "%0.2f: %s",
-                                 time(), color_str.c_str());
+                                 position(), color_str.c_str());
         };
         buffer.clear();
         buffer.resize(attempt_snprintf(nullptr) + 1 /* null terminator */, '\0');
@@ -142,24 +142,6 @@ namespace neo {
         return s;
     }
 
-    void gradient::sample_uniform(float period, float offset, std::vector<rgb> &buffer, blending_method method) const {
-        for (std::size_t i = 0; i < buffer.size(); ++i) {
-            // Compute the correct time for this led
-            float t = offset + float(i) * period;
-            // Make sure it's in 0..1 range, handle also negative dts correctly
-            t -= std::floor(t);
-            assert(-std::numeric_limits<float>::epsilon() < t and t < std::nextafter(1.f, 2.f));
-            buffer[i] = sample(t, method);
-        }
-    }
-
-    std::vector<rgb> gradient::sample_uniform(float period, float offset, std::size_t num_samples,
-                                              std::vector<rgb> reuse_buffer, blending_method method) const {
-        reuse_buffer.resize(num_samples);
-        sample_uniform(period, offset, reuse_buffer, method);
-        return reuse_buffer;
-    }
-
     rgb gradient::sample(float progress, float offset, float repeat, blending_method method) const {
         // Compute the correct 0..1 offset, handling negative numbers correctly.
         float t = (progress + offset) * repeat;
@@ -182,7 +164,7 @@ namespace neo {
             return back().color();
         }
         const auto lb = std::prev(ub);
-        t = std::clamp((t - lb->time()) / (ub->time() - lb->time()), 0.f, 1.f);
+        t = std::clamp((t - lb->position()) / (ub->position() - lb->position()), 0.f, 1.f);
         return method(lb->color(), ub->color(), t);
     }
 
@@ -193,7 +175,7 @@ namespace neo {
     gradient::gradient(std::vector<fixed_gradient_entry> const &entries) {
         _entries.reserve(entries.size());
         for (auto const &entry : entries) {
-            _entries.emplace_back(entry.time(), entry.color());
+            _entries.emplace_back(entry.position(), entry.color());
         }
         std::sort(std::begin(_entries), std::end(_entries), safe_less{});
         normalize();
@@ -235,12 +217,12 @@ namespace mlab {
     bin_stream &operator>>(bin_stream &i, neo::gradient_entry &ge) {
         std::uint8_t t = 0;
         i >> ge._color >> t;
-        ge.set_time(byte_to_unit_float(t));
+        ge.set_position(byte_to_unit_float(t));
         return i;
     }
 
     bin_data &operator<<(bin_data &o, neo::fixed_gradient_entry const &fge) {
-        return o << fge.color() << unit_float_to_byte(fge.time());
+        return o << fge.color() << unit_float_to_byte(fge.position());
     }
 
 
