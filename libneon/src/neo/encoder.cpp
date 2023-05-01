@@ -52,7 +52,7 @@ namespace neo {
         static_assert(static_cast<rmt_encoder_t *>(static_cast<led_encoder *>(nullptr)) == static_cast<led_encoder *>(nullptr));
     }
 
-    led_encoder::led_encoder(neo::encoding enc, gpio_num_t gpio)
+    led_encoder::led_encoder(encoding enc, rmt_tx_channel_config_t config)
         : rmt_encoder_t{.encode = &_encode, .reset = &_reset, .del = &_del},
           _bytes_encoder{nullptr},
           _tail_encoder{nullptr},
@@ -61,8 +61,6 @@ namespace neo {
           _rmt_chn{nullptr} {
         ESP_ERROR_CHECK(rmt_new_bytes_encoder(&enc.rmt_encoder_cfg, &_bytes_encoder));
         ESP_ERROR_CHECK(rmt_new_copy_encoder(&rmt_copy_encoder_config, &_tail_encoder));
-        rmt_tx_channel_config_t config = default_rmt_config;
-        config.gpio_num = gpio;
         ESP_ERROR_CHECK(rmt_new_tx_channel(&config, &_rmt_chn));
         ESP_ERROR_CHECK(rmt_enable(_rmt_chn));
     }

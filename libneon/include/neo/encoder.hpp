@@ -20,13 +20,22 @@ namespace neo {
     constexpr rmt_tx_channel_config_t default_rmt_config{
             .gpio_num = -1,
             .clk_src = RMT_CLK_SRC_DEFAULT,
-            .resolution_hz = 40'000'000,// 40MHz
-            .mem_block_symbols = 1024,  // Recommended value when using dma
-            .trans_queue_depth = 2,     // We should be safe with at most two transactions
+            .resolution_hz = 10'000'000,// 10MHz
+            .mem_block_symbols = 64,
+            .trans_queue_depth = 4,
             .flags = {.invert_out = false,
-                      .with_dma = true,
+                      .with_dma = false,
                       .io_loop_back = false,
                       .io_od_mode = false}};
+
+    [[nodiscard]] constexpr rmt_tx_channel_config_t make_rmt_config(gpio_num_t gpio, bool dma = false, std::size_t mem_symbols = 64, std::size_t queue_depth = 4) {
+        rmt_tx_channel_config_t cfg = default_rmt_config;
+        cfg.gpio_num = gpio;
+        cfg.flags.with_dma = dma;
+        cfg.mem_block_symbols = mem_symbols;
+        cfg.trans_queue_depth = queue_depth;
+        return cfg;
+    }
 
 
     struct encoding_spec {
@@ -59,7 +68,10 @@ namespace neo {
                                        .duration1 = std::uint32_t(t1l.count()) * resolution_hz / 1'000'000'000,
                                        .level1 = 0},
                               .flags = {.msb_first = msb_first}},
-              rmt_reset_sym{.duration0 = std::uint32_t(res.count()) * resolution_hz / 1'000'000'000, .level0 = 0, .duration1 = 0, .level1 = 0} {}
+              rmt_reset_sym{.duration0 = std::uint32_t(res.count()) * resolution_hz / 2'000'000'000,
+                            .level0 = 0,
+                            .duration1 = std::uint32_t(res.count()) * resolution_hz / 2'000'000'000,
+                            .level1 = 0} {}
 
         constexpr encoding(encoding_spec spec) : encoding{spec.t0h, spec.t0l, spec.t1h, spec.t1l, spec.chn_seq, spec.res} {}
 
@@ -85,6 +97,7 @@ namespace neo {
 
     public:
         led_encoder();
+        explicit led_encoder(encoding enc, rmt_tx_channel_config_t config);
 
         led_encoder(led_encoder const &) = delete;
         led_encoder &operator=(led_encoder const &) = delete;
@@ -92,7 +105,6 @@ namespace neo {
         led_encoder(led_encoder &&) noexcept = default;
         led_encoder &operator=(led_encoder &&) noexcept = default;
 
-        explicit led_encoder(encoding enc, gpio_num_t gpio);
 
         esp_err_t transmit_raw(mlab::range<std::uint8_t const *> data);
 
