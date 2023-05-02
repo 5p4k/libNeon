@@ -5,6 +5,7 @@
 #include <cmath>
 #include <neo/color.hpp>
 #include <vector>
+#include <neo/math.hpp>
 
 namespace neo {
 
@@ -86,7 +87,7 @@ namespace neo {
             return {gray, gray, gray};
         }
         // Remap in 0...6
-        const float h_ = 6.f * std::clamp(h - std::floor(h), 0.f, 1.f);
+        const float h_ = 6.f * modclamp(h);
         const auto hue_floor = std::floor(h_);
         const auto hue_block = unsigned(hue_floor) % 6;
         const float m = v_ * (1.f - s_);
@@ -109,7 +110,7 @@ namespace neo {
 
     hsv hsv::clamped() const {
         return {
-                std::clamp(h - std::floor(h), 0.f, 1.f),
+                modclamp(h),
                 std::clamp(s, 0.f, 1.f),
                 std::clamp(v, 0.f, 1.f)};
     }

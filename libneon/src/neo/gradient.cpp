@@ -6,7 +6,7 @@
 #include <cmath>
 #include <iomanip>
 #include <neo/gradient.hpp>
-#include <sstream>
+#include <neo/math.hpp>
 
 namespace neo {
 
@@ -143,11 +143,7 @@ namespace neo {
     }
 
     srgb gradient::sample(float progress, float offset, float repeat, blending_method method) const {
-        // Compute the correct 0..1 offset, handling negative numbers correctly.
-        float t = (progress + offset) * repeat;
-        t -= std::floor(t);
-        assert(-std::numeric_limits<float>::epsilon() < t and t < std::nextafter(1.f, 2.f));
-        return sample(t, method);
+        return sample(modclamp((progress + offset) * repeat), method);
     }
 
     srgb gradient::sample(float t, blending_method method) const {
