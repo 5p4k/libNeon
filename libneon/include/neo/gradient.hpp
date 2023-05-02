@@ -7,7 +7,9 @@
 
 #include <mlab/bin_data.hpp>
 #include <neo/color.hpp>
+#include <map>
 #include <vector>
+#include <neo/ranges.hpp>
 
 namespace neo {
     using blending_method = srgb (&)(srgb l, srgb r, float t);
@@ -82,6 +84,114 @@ namespace neo {
 
         gradient_entry &operator=(gradient_entry &&) noexcept = default;
     };
+
+
+    struct positioned_compare {
+        constexpr bool operator()(float l, float r) const {
+            return std::abs(l - r) > std::numeric_limits<float>::epsilon() and l < r;
+        }
+
+        template <ranges::has_position_key L>
+        constexpr bool operator()(L &&lhs, float r) const {
+            return operator()(lhs.first, r);
+        }
+
+        template <ranges::has_position_key R>
+        constexpr bool operator()(float l, R &&rhs) const {
+            return operator()(l, rhs.first);
+        }
+
+        template <ranges::has_position_key L, ranges::has_position_key R>
+        constexpr bool operator()(L &&lhs, R &&rhs) const {
+            return operator()(lhs.first, rhs.first);
+        }
+    };
+
+    class gradient2 {
+    public:
+        using entry_t = std::pair<float, srgb>;
+        using entry_container_t = std::vector<entry_t>;
+
+        constexpr gradient2() = default;
+        explicit gradient2(entry_container_t entries);
+        inline gradient2(std::initializer_list<entry_t> entries);
+
+        gradient2(std::initializer_list<srgb> entries);
+
+        template <std::input_iterator Iterator>
+        gradient2(Iterator begin, Iterator end);
+
+        using const_iterator = entry_container_t::const_iterator;
+
+        [[nodiscard]] inline auto begin() const;
+        [[nodiscard]] inline auto end() const;
+        [[nodiscard]] inline auto size() const;
+        [[nodiscard]] inline bool empty() const;
+
+        [[nodiscard]] inline decltype(auto) front() const;
+        [[nodiscard]] inline decltype(auto) back() const;
+        [[nodiscard]] inline decltype(auto) operator[](std::size_t i) const;
+
+        [[nodiscard]] const_iterator lower_bound(float t) const;
+        [[nodiscard]] const_iterator upper_bound(float t) const;
+
+        [[nodiscard]] std::pair<const_iterator, const_iterator> low_upp_bounds(float t) const;
+
+    private:
+        template <std::input_iterator Iterator>
+        [[nodiscard]] static entry_container_t ensure_position(Iterator begin, Iterator end);
+
+        entry_container_t _entries{};
+    };
+
+    /** CPP */
+    gradient2::gradient2(gradient2::entry_container_t entries) : _entries{std::move(entries)} {
+        std::sort(std::begin(_entries), std::end(_entries), positioned_compare{});
+    }
+
+    gradient2::gradient2(std::initializer_list<srgb> entries) : gradient2{ensure_position(std::begin(entries), std::end(entries))} {}
+
+    gradient2::gradient2(std::initializer_list<entry_t> entries) : gradient2{entry_container_t{entries}} {}
+
+    /** HERE */
+
+    template <std::input_iterator Iterator>
+    gradient2::gradient2(Iterator begin, Iterator end) : gradient2{ensure_position(begin, end)} {}
+
+    template <std::input_iterator Iterator>
+    gradient2::entry_container_t gradient2::ensure_position(Iterator begin, Iterator end) {
+        if constexpr (ranges::has_position_key<std::iter_value_t<Iterator>>) {
+            return {begin, end};
+        } else {
+            auto kvps = std::ranges::subrange{begin, end} | ranges::unit_enumerate;
+            return {std::begin(kvps), std::end(kvps)};
+        }
+    }
+
+    auto gradient2::begin() const {
+        return _entries.begin();
+    }
+    auto gradient2::end() const {
+        return _entries.end();
+    }
+    auto gradient2::size() const {
+        return _entries.size();
+    }
+    bool gradient2::empty() const {
+        return _entries.empty();
+    }
+
+    decltype(auto) gradient2::front() const {
+        return _entries.front();
+    }
+    decltype(auto) gradient2::back() const {
+        return _entries.back();
+    }
+    decltype(auto) gradient2::operator[](std::size_t i) const {
+        return _entries.at(i);
+    }
+
+
 
     class gradient {
         std::vector<gradient_entry> _entries;
