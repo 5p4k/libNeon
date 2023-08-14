@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <neo/gradient.hpp>
 #include <neo/math.hpp>
+#include <neo/ranges.hpp>
 
 namespace neo {
 
@@ -142,11 +143,61 @@ namespace neo {
         return s;
     }
 
-    srgb gradient::sample(float progress, float offset, float repeat, blending_method method) const {
+    std::vector<srgb> gradient_sample(std::vector<srgb> const &gradient, std::size_t count, blend_fn_t blend_fn) {
+        auto v = std::views::all(gradient) | ranges::normalize;
+        std::vector<std::pair<float, srgb>> normalized{std::begin(v), std::end(v)};
+        return gradient_sample_normalized(std::move(normalized), count, blend_fn);
+    }
+
+    std::vector<srgb> gradient_sample(std::vector<std::pair<float, srgb>> const &gradient, std::size_t count, blend_fn_t blend_fn) {
+        auto v = std::views::all(gradient) | ranges::normalize;
+        std::vector<std::pair<float, srgb>> normalized{std::begin(v), std::end(v)};
+        return gradient_sample_normalized(std::move(normalized), count, blend_fn);
+    }
+
+    std::vector<srgb> gradient_sample_normalized(std::vector<std::pair<float, srgb>> gradient_normalized, std::size_t count, blend_fn_t blend_fn) {
+        std::sort(std::begin(gradient_normalized), std::end(gradient_normalized), positioned_compare{});
+        return gradient_sample_normalized_sorted(gradient_normalized, count, blend_fn);
+    }
+
+    std::vector<srgb> gradient_sample_normalized_sorted(std::vector<std::pair<float, srgb>> const &gradient_normalized_sorted, std::size_t count, blend_fn_t blend_fn) {
+        // Alias for readability
+        auto &g = gradient_normalized_sorted;
+        if (g.empty() or count == 0) {
+            return {};
+        }
+        if (g.size() == 1) {
+            return {g.front().second};
+        }
+        std::vector<srgb> retval;
+        retval.reserve(count);
+
+        auto lb = std::begin(g);
+        auto ub = std::next(lb);
+        auto less = positioned_compare{};
+        for (std::size_t i = 0; i < count; ++i) {
+            const float t = float(i) / float(count - 1);
+            while (ub != std::end(g) and not less(t, ub->first)) {
+                lb = ub++;
+            }
+            if (ub == std::end(g)) {
+                retval.emplace_back(lb->second);
+            } else {
+                assert(less(t, ub->first) and not less(t, lb->first));
+                const float blend_factor = (t - lb->first) / (ub->first - lb->first);
+                retval.emplace_back(blend_fn(lb->second, ub->second, blend_factor));
+            }
+        }
+        return retval;
+    }
+
+
+
+    srgb gradient::sample(float progress, float offset, float repeat, blend_fn_t method) const {
         return sample(modclamp((progress + offset) * repeat), method);
     }
 
-    srgb gradient::sample(float t, blending_method method) const {
+    srgb gradient::sample(float t, blend_fn_t method) const {
         if (not std::isfinite(t)) {
             t = 0.f;
         }

@@ -7,16 +7,10 @@
 
 #include <ranges>
 #include <neo/math.hpp>
+#include <neo/traits.hpp>
+#include <neo/gradient.hpp>
 
 namespace neo::ranges {
-
-    template <class T, class F>
-    struct is_pair_with_first : public std::false_type {};
-
-    template <class F, class X>
-    struct is_pair_with_first<std::pair<F, X>, F> : public std::true_type {};
-
-    template <class T> concept has_position_key = is_pair_with_first<std::remove_cvref_t<T>, float>::value;
 
     /**
      * @note Until we have C++23, mimic `range_adaptor_closure`.
@@ -128,6 +122,27 @@ namespace neo::ranges {
             }
         }
     };
+
+    struct sample : public adaptor<sample> {
+        unsigned count;
+        blend_fn_t blend_fn;
+        constexpr explicit sample(unsigned count_, blend_fn_t blend_fn_ = blend_linear) : count{count_}, blend_fn{blend_fn_} {}
+
+        /**
+         * @todo Make constexpr with C++23
+         */
+        template <class R>
+        auto operator()(R &&r) const requires std::ranges::viewable_range<R> and std::ranges::sized_range<R> {
+            if constexpr (has_position_key<std::ranges::range_value_t<R>>) {
+                auto norm_r = r | normalize;
+                std::vector<std::pair<float, srgb>> gradient_normalized{std::begin(norm_r), std::end(norm_r)};
+                return gradient_sample_normalized(std::move(gradient_normalized), count, blend_fn);
+            } else {
+                return operator()(unit_enumerate_view<R>{std::forward<R>(r)});
+            }
+        }
+    };
+
 
 
 }

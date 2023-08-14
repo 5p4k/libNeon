@@ -9,15 +9,20 @@
 #include <neo/color.hpp>
 #include <map>
 #include <vector>
-#include <neo/ranges.hpp>
+#include <neo/traits.hpp>
 
 namespace neo {
-    using blending_method = srgb (&)(srgb l, srgb r, float t);
+    using blend_fn_t = srgb (&)(srgb l, srgb r, float t);
 
     [[maybe_unused]] srgb blend_linear(srgb l, srgb r, float t);
     [[maybe_unused]] srgb blend_round_down(srgb l, srgb, float);
     [[maybe_unused]] srgb blend_round_up(srgb, srgb r, float);
     [[maybe_unused]] srgb blend_nearest_neighbor(srgb l, srgb r, float t);
+
+    [[nodiscard]] std::vector<srgb> gradient_sample(std::vector<srgb> const &gradient, std::size_t count, blend_fn_t blend_fn = blend_linear);
+    [[nodiscard]] std::vector<srgb> gradient_sample(std::vector<std::pair<float, srgb>> const &gradient, std::size_t count, blend_fn_t blend_fn = blend_linear);
+    [[nodiscard]] std::vector<srgb> gradient_sample_normalized(std::vector<std::pair<float, srgb>> gradient_normalized, std::size_t count, blend_fn_t blend_fn = blend_linear);
+    [[nodiscard]] std::vector<srgb> gradient_sample_normalized_sorted(std::vector<std::pair<float, srgb>> const &gradient_normalized_sorted, std::size_t count, blend_fn_t blend_fn = blend_linear);
 
     class gradient_entry;
     class fixed_gradient_entry;
@@ -85,23 +90,25 @@ namespace neo {
         gradient_entry &operator=(gradient_entry &&) noexcept = default;
     };
 
-
+    /**
+     * @todo Rename to positioned_less
+     */
     struct positioned_compare {
         constexpr bool operator()(float l, float r) const {
             return std::abs(l - r) > std::numeric_limits<float>::epsilon() and l < r;
         }
 
-        template <ranges::has_position_key L>
+        template <has_position_key L>
         constexpr bool operator()(L &&lhs, float r) const {
             return operator()(lhs.first, r);
         }
 
-        template <ranges::has_position_key R>
+        template <has_position_key R>
         constexpr bool operator()(float l, R &&rhs) const {
             return operator()(l, rhs.first);
         }
 
-        template <ranges::has_position_key L, ranges::has_position_key R>
+        template <has_position_key L, has_position_key R>
         constexpr bool operator()(L &&lhs, R &&rhs) const {
             return operator()(lhs.first, rhs.first);
         }
@@ -115,8 +122,6 @@ namespace neo {
         constexpr gradient2() = default;
         explicit gradient2(entry_container_t entries);
         inline gradient2(std::initializer_list<entry_t> entries);
-
-        gradient2(std::initializer_list<srgb> entries);
 
         template <std::input_iterator Iterator>
         gradient2(Iterator begin, Iterator end);
@@ -138,8 +143,6 @@ namespace neo {
         [[nodiscard]] std::pair<const_iterator, const_iterator> low_upp_bounds(float t) const;
 
     private:
-        template <std::input_iterator Iterator>
-        [[nodiscard]] static entry_container_t ensure_position(Iterator begin, Iterator end);
 
         entry_container_t _entries{};
     };
@@ -149,7 +152,6 @@ namespace neo {
         std::sort(std::begin(_entries), std::end(_entries), positioned_compare{});
     }
 
-    gradient2::gradient2(std::initializer_list<srgb> entries) : gradient2{ensure_position(std::begin(entries), std::end(entries))} {}
 
     gradient2::gradient2(std::initializer_list<entry_t> entries) : gradient2{entry_container_t{entries}} {}
 
@@ -158,15 +160,6 @@ namespace neo {
     template <std::input_iterator Iterator>
     gradient2::gradient2(Iterator begin, Iterator end) : gradient2{ensure_position(begin, end)} {}
 
-    template <std::input_iterator Iterator>
-    gradient2::entry_container_t gradient2::ensure_position(Iterator begin, Iterator end) {
-        if constexpr (ranges::has_position_key<std::iter_value_t<Iterator>>) {
-            return {begin, end};
-        } else {
-            auto kvps = std::ranges::subrange{begin, end} | ranges::unit_enumerate;
-            return {std::begin(kvps), std::end(kvps)};
-        }
-    }
 
     auto gradient2::begin() const {
         return _entries.begin();
@@ -239,14 +232,14 @@ namespace neo {
         [[nodiscard]] inline fixed_gradient_entry const &operator[](std::size_t i) const;
         [[nodiscard]] inline fixed_gradient_entry &operator[](std::size_t i);
 
-        [[nodiscard]] srgb sample(float t, blending_method method = blend_linear) const;
-        [[nodiscard]] srgb sample(float progress, float offset = 0.f, float repeat = 1.f, blending_method method = blend_linear) const;
+        [[nodiscard]] srgb sample(float t, blend_fn_t method = blend_linear) const;
+        [[nodiscard]] srgb sample(float progress, float offset = 0.f, float repeat = 1.f, blend_fn_t method = blend_linear) const;
 
         template <class OutputIterator>
-        OutputIterator fill(OutputIterator begin, OutputIterator end, float offset = 0.f, float repeat = 1.f, blending_method method = blend_linear) const;
+        OutputIterator fill(OutputIterator begin, OutputIterator end, float offset = 0.f, float repeat = 1.f, blend_fn_t method = blend_linear) const;
 
         template <class OutputIterator>
-        OutputIterator fill_n(OutputIterator out, std::size_t num, float offset = 0.f, float repeat = 1.f, blending_method method = blend_linear) const;
+        OutputIterator fill_n(OutputIterator out, std::size_t num, float offset = 0.f, float repeat = 1.f, blend_fn_t method = blend_linear) const;
 
         [[nodiscard]] std::string to_string() const;
     };
@@ -260,12 +253,12 @@ namespace mlab {
 namespace neo {
 
     template <class OutputIterator>
-    OutputIterator gradient::fill(OutputIterator begin, OutputIterator end, float offset, float repeat, blending_method method) const {
+    OutputIterator gradient::fill(OutputIterator begin, OutputIterator end, float offset, float repeat, blend_fn_t method) const {
         return fill_n(begin, std::distance(begin, end), offset, repeat, method);
     }
 
     template <class OutputIterator>
-    OutputIterator gradient::fill_n(OutputIterator out, std::size_t num, float offset, float repeat, blending_method method) const {
+    OutputIterator gradient::fill_n(OutputIterator out, std::size_t num, float offset, float repeat, blend_fn_t method) const {
         for (std::size_t i = 0; i < num; ++i) {
             *(out++) = sample(float(i) / float(num), offset, repeat, method);
         }
