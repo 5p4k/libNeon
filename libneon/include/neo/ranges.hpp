@@ -143,6 +143,66 @@ namespace neo::ranges {
         }
     };
 
+    template <class Fn, class ...Args> requires std::is_invocable_v<Fn, srgb, srgb, Args...>
+    struct broadcast_fn {
+        Fn fn{};
+        std::tuple<Args...> args{};
+
+        using value_type = std::result_of_t<Fn(Args...)>;
+
+        broadcast_fn() = default;
+
+        explicit broadcast_fn(Fn fn_, Args ...args_) : fn{std::move(fn_)}, args{std::move(args_)...} {}
+
+    private:
+        template <std::size_t ...Is>
+        auto invoke(std::index_sequence<Is...>, srgb c1, srgb c2) {
+            return fn(c1, c2, std::get<Is>(args)...);
+        }
+    public:
+        auto operator()(srgb c1, srgb c2) {
+            return invoke(std::index_sequence_for<Args...>{}, c1, c2);
+        }
+    };
+
+    template <class It1, class It2, class Fn, class ...Args>
+    struct broadcast_view_iterator {
+        broadcast_fn<Fn, Args...> *fn;
+        It1 it1;
+        It2 it2;
+
+        using iterator_category = std::forward_iterator_tag;
+        using difference_type   = void;
+        using value_type        = broadcast_fn<Fn, Args...>::value_type;
+        using pointer           = void;
+        using reference         = void;
+
+        constexpr value_type operator*() const {
+            return (*fn)(*it1, *it2);
+        }
+
+        constexpr broadcast_view_iterator &operator++() { ++it1, ++it2; return *this; }
+        constexpr broadcast_view_iterator  operator++(int) { auto copy = *this; ++*this; return copy; }
+
+        template <class Jt1, class Jt2> constexpr bool operator==(broadcast_view_iterator<Jt1, Jt2, Fn, Args...> const &i) const { return fn == i.fn and it1 == i.it1 and it2 == i.it2; }
+        template <class Jt1, class Jt2> constexpr bool operator!=(broadcast_view_iterator<Jt1, Jt2, Fn, Args...> const &i) const { return fn != i.fn or it1 != i.it1 or it2 != i.it2; }
+    };
+
+    template <class R1, class R2, class Fn, class ...Args>
+    requires std::ranges::viewable_range<R1> and std::ranges::sized_range<R1> and std::ranges::viewable_range<R2> and std::ranges::sized_range<R2>
+    struct broadcast_view {
+        broadcast_fn<Fn, Args...> fn;
+        R1 r1;
+        R2 r2;
+
+        broadcast_view(Fn fn_, R1 &&r1_, R2 &&r2_, Args... args_) : fn{std::move(fn_), std::move(args_)...}, r1{std::forward<R1>(r1)}, r2{std::forward<R1>(r2)}
+        {
+            assert(std::ranges::size(r1_) == std::ranges::size(r2_));
+        }
+
+        auto begin() { return broadcast_view_iterator{&fn, std::begin(r1), std::begin(r2)}; }
+        auto end() { return broadcast_view_iterator{&fn, std::end(r1), std::end(r2)}; }
+    };
 
 
 }
