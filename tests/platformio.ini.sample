@@ -8,12 +8,7 @@ framework = espidf
 ; test_port=/dev/ttyUSB0
 ; monitor_speed = 115200
 
-build_unflags = -std=gnu++11 -std=gnu++14 -std=c++11 -std=c++14 -std=c++17
-build_flags =
-    -std=gnu++17
-    -Wall -Wextra
-;   -D LOG_LOCAL_LEVEL=ESP_LOG_DEBUG
-;   -D CORE_DEBUG_LEVEL=5
+build_flags = -Wall -Wextra
 
 ; These settings allow to compile the tests with `pio run` as well as `pio test`
 test_transport = custom
