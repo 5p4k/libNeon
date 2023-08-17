@@ -1,3 +1,4 @@
+#include <neo/color.hpp>
 #include <unity.h>
 
 #ifdef __cplusplus
