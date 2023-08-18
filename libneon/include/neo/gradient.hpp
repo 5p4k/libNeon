@@ -93,20 +93,21 @@ namespace neo {
             return out;
         }
         constexpr auto less = safe_less{};
-        auto lb = begin;
+        auto ub = begin;
         for (std::size_t i = 0; i < n; ++i) {
-            const float t = modclamp(rotate + float(i) / float(n - 1), 0.f, 1.f);
-            lb = std::lower_bound(lb, end, t, less);
-            if (lb == end) {
+            // Must check for n-1 because modclamp will make it 0.0
+            const float t = i == n - 1 ? 1.f : modclamp(rotate + float(i) / float(n - 1), 0.f, 1.f);
+            ub = std::upper_bound(ub, end, t, less);
+            if (ub == begin) {
                 *(out++) = begin->col;
                 continue;
             }
-            auto ub = std::next(lb);
+            auto lb = std::prev(ub);
             if (ub == end) {
                 *(out++) = lb->col;
                 continue;
             }
-            const float blend_f = modclamp((t - lb->pos) / (ub->pos - lb->pos), 0.f, 1.f);
+            const float blend_f = std::clamp((t - lb->pos) / (ub->pos - lb->pos), 0.f, 1.f);
             *(out++) = blend_fn(lb->col, ub->col, blend_f);
         }
         return out;
