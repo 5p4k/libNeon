@@ -76,8 +76,8 @@ namespace neo {
 
         esp_err_t transmit_raw(mlab::range<std::uint8_t const *> data);
 
-        template <class ColorIterator>
-        esp_err_t transmit(ColorIterator begin, ColorIterator end);
+        template <class ColorIterator, class Extractor = default_channel_extractor<std::iter_value_t<ColorIterator>>>
+        esp_err_t transmit(ColorIterator begin, ColorIterator end, Extractor const &extractor = {});
 
         ~led_encoder();
     };
@@ -130,11 +130,11 @@ namespace neo {
     constexpr encoding::encoding(encoding_spec spec) : encoding{spec.t0h, spec.t0l, spec.t1h, spec.t1l, spec.chn_seq, spec.res} {}
 
 
-    template <class ColorIterator>
-    esp_err_t led_encoder::transmit(ColorIterator begin, ColorIterator end) {
+    template <class ColorIterator, class Extractor>
+    esp_err_t led_encoder::transmit(ColorIterator begin, ColorIterator end, Extractor const &extractor) {
         _buffer.clear();
         _buffer.reserve(std::distance(begin, end) * _chn_seq.size());
-        _chn_seq.extract(begin, end, std::back_inserter(_buffer));
+        _chn_seq.extract(begin, end, std::back_inserter(_buffer), extractor);
         return transmit_raw(_buffer.data_view());
     }
 

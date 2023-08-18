@@ -71,9 +71,11 @@ namespace neo {
 
 namespace neo {
 
-    constexpr std::chrono::milliseconds operator""_fps(unsigned long long int fps) {
-        return 1'000ms / fps;
-    }
+    namespace literals {
+        constexpr std::chrono::milliseconds operator""_fps(unsigned long long int fps) {
+            return 1'000ms / fps;
+        }
+    }// namespace literals
 
     BaseType_t alarm::core_affinity() const {
         return _core_affinity;

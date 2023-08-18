@@ -44,6 +44,10 @@ namespace neo {
     template <class It, class OutIt>
     OutIt gradient_make_uniform_from_colors(It begin, It end, OutIt out);
 
+
+    template <class Container = std::vector<gradient_entry>>
+    [[nodiscard]] Container gradient_make_uniform_from_colors(std::initializer_list<srgb> colors);
+
 }// namespace neo
 
 namespace neo {
@@ -94,7 +98,7 @@ namespace neo {
             const float t = modclamp(rotate + float(i) / float(n - 1), 0.f, 1.f);
             lb = std::lower_bound(lb, end, t, less);
             if (lb == end) {
-                *(out++) = *begin;
+                *(out++) = begin->col;
                 continue;
             }
             auto ub = std::next(lb);
@@ -133,6 +137,13 @@ namespace neo {
             *(out++) = {t, *begin};
         }
         return out;
+    }
+
+    template <class Container>
+    Container gradient_make_uniform_from_colors(std::initializer_list<srgb> colors) {
+        Container c{};
+        gradient_make_uniform_from_colors(std::begin(colors), std::end(colors), std::back_inserter(c));
+        return c;
     }
 }// namespace neo
 #endif//NEO_GRADIENT_HPP
