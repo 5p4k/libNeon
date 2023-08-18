@@ -11,6 +11,7 @@
 namespace neo {
     using blend_fn_t = srgb (&)(srgb l, srgb r, float t);
 
+    [[maybe_unused]] [[nodiscard]] inline srgb blend_lerp(srgb l, srgb r, float t);
     [[maybe_unused]] [[nodiscard]] inline srgb blend_linear(srgb l, srgb r, float t);
     [[maybe_unused]] [[nodiscard]] inline srgb blend_round_down(srgb l, srgb, float);
     [[maybe_unused]] [[nodiscard]] inline srgb blend_round_up(srgb, srgb r, float);
@@ -60,6 +61,10 @@ namespace neo {
 
     constexpr bool safe_less::operator()(gradient_entry const &l, gradient_entry const &r) const {
         return (*this)(l.pos, r.pos);
+    }
+
+    srgb blend_lerp(srgb l, srgb r, float t) {
+        return l.lerp(r, t);
     }
 
     srgb blend_linear(srgb l, srgb r, float t) {

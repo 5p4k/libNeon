@@ -2,10 +2,10 @@
 // Created by spak on 6/7/21.
 //
 
-#include <esp_log.h>
-#include <neo/timer.hpp>
 #include <cmath>
+#include <esp_log.h>
 #include <neo/math.hpp>
+#include <neo/timer.hpp>
 
 
 namespace neo {
@@ -69,7 +69,7 @@ namespace neo {
         ESP_ERROR_CHECK(gptimer_enable(_hdl));
     }
 
-     timer::~timer() {
+    timer::~timer() {
         stop();
         ESP_ERROR_CHECK(gptimer_disable(_hdl));
         ESP_ERROR_CHECK(gptimer_del_timer(_hdl));

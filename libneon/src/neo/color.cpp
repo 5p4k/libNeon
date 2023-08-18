@@ -2,21 +2,13 @@
 // Created by spak on 6/4/21.
 //
 
-#include <cmath>
 #include <neo/color.hpp>
-#include <vector>
-#include <neo/math.hpp>
 
 namespace neo {
 
-    float srgb::to_linear(std::uint8_t v) {
-        const float f = float(v) / 255.f;
-        return f <= 0.04045f ? f / 12.92f : std::pow((f + 0.055f) / 1.055f, 2.4f);
-    }
-
-    std::uint8_t srgb::from_linear(float v) {
-        v = v <= 0.0031308f ? v * 12.92f : 1.055f * std::pow(v, 1.f / 2.4f) - 0.055f;
-        return std::uint8_t(std::round(std::clamp(v * 255.f, 0.f, 255.f)));
+    srgb_gamma_channel_extractor const &srgb_linear_channel_extractor() {
+        static srgb_gamma_channel_extractor _extractor{1.f};
+        return _extractor;
     }
 
     std::string srgb::to_string() const {
@@ -26,14 +18,6 @@ namespace neo {
         std::snprintf(buffer.data(), buffer.size(), "#%02x%02x%02x", r, g, b);
         buffer.pop_back();
         return buffer;
-    }
-
-    std::array<float, 3> srgb::to_linear(srgb const &rgb) {
-        return {to_linear(rgb.r), to_linear(rgb.g), to_linear(rgb.b)};
-    }
-
-    srgb srgb::from_linear(std::array<float, 3> const &linear_rgb) {
-        return {from_linear(linear_rgb[0]), from_linear(linear_rgb[1]), from_linear(linear_rgb[2])};
     }
 
     srgb srgb::blend(srgb target, float factor) const {
@@ -48,8 +32,7 @@ namespace neo {
         return {
                 std::uint8_t(std::clamp(float(r) * (1.f - factor) + float(target.r) * factor, 0.f, 255.f)),
                 std::uint8_t(std::clamp(float(g) * (1.f - factor) + float(target.g) * factor, 0.f, 255.f)),
-                std::uint8_t(std::clamp(float(b) * (1.f - factor) + float(target.b) * factor, 0.f, 255.f))
-        };
+                std::uint8_t(std::clamp(float(b) * (1.f - factor) + float(target.b) * factor, 0.f, 255.f))};
     }
 
     hsv srgb::to_hsv() const {

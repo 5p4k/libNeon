@@ -12,10 +12,8 @@ namespace neo {
     namespace literals {
         using namespace std::chrono_literals;
 
-        constexpr std::chrono::milliseconds operator ""_fps(unsigned long long int fps) {
-            return 1'000ms / fps;
-        }
-    }
+        constexpr std::chrono::milliseconds operator""_fps(unsigned long long int fps);
+    }// namespace literals
 
     class alarm : public timer {
         std::atomic<TaskHandle_t> _cbk_task = nullptr;
@@ -72,6 +70,10 @@ namespace neo {
 }// namespace neo
 
 namespace neo {
+
+    constexpr std::chrono::milliseconds operator""_fps(unsigned long long int fps) {
+        return 1'000ms / fps;
+    }
 
     BaseType_t alarm::core_affinity() const {
         return _core_affinity;
