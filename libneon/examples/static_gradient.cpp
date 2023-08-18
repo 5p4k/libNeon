@@ -12,7 +12,7 @@ extern "C" void app_main() {
     neo::led_encoder encoder{neo::encoding::ws2812b, neo::make_rmt_config(strip_gpio_pin)};
 
     const auto rainbow = neo::gradient_make_uniform_from_colors(
-            {0xff0000_rgb, 0xff00_rgb, 0x00ff00_rgb, 0x00ff_rgb, 0x0000ff_rgb, 0xff00ff_rgb, 0xff0000_rgb});
+            {0xff0000_rgb, 0xffff00_rgb, 0x00ff00_rgb, 0x00ffff_rgb, 0x0000ff_rgb, 0xff00ff_rgb, 0xff0000_rgb});
 
     std::array<neo::srgb, strip_num_leds> colors{};
     neo::gradient_sample(std::begin(rainbow), std::end(rainbow), colors.size(), std::begin(colors));
