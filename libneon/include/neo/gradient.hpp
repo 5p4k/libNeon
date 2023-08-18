@@ -36,7 +36,7 @@ namespace neo {
     };
 
     template <class It, class OutIt>
-    OutIt gradient_sample(It begin, It end, std::size_t n, OutIt out, float rotate = 0.f, blend_fn_t blend_fn = blend_linear);
+    OutIt gradient_sample(It begin, It end, std::size_t n, OutIt out, float rotate = 0.f, float scale = 1.f, blend_fn_t blend_fn = blend_linear);
 
     template <class It>
     void gradient_normalize(It begin, It end);
@@ -88,16 +88,17 @@ namespace neo {
     }
 
     template <class It, class OutIt>
-    OutIt gradient_sample(It begin, It end, std::size_t n, OutIt out, float rotate, blend_fn_t blend_fn) {
+    OutIt gradient_sample(It begin, It end, std::size_t n, OutIt out, float rotate, float scale, blend_fn_t blend_fn) {
         if (begin == end) {
             return out;
         }
         constexpr auto less = safe_less{};
         auto ub = begin;
+        auto last_t = std::numeric_limits<float>::infinity();
         for (std::size_t i = 0; i < n; ++i) {
-            // Must check for n-1 because modclamp will make it 0.0
-            const float t = i == n - 1 ? 1.f : modclamp(rotate + float(i) / float(n - 1), 0.f, 1.f);
-            ub = std::upper_bound(ub, end, t, less);
+            const float t = modclamp(scale * (rotate + float(i) / float(n)), 0.f, 1.f);
+            ub = std::upper_bound(less(t, last_t) ? begin : ub, end, t, less);
+            last_t = t;
             if (ub == begin) {
                 *(out++) = begin->col;
                 continue;
