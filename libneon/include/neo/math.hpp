@@ -5,7 +5,9 @@
 #ifndef LIBNEON_MATH_HPP
 #define LIBNEON_MATH_HPP
 
+#include <algorithm>
 #include <cmath>
+#include <cstdint>
 
 namespace neo {
     [[nodiscard]] constexpr float modclamp(float f, float low = 0.f, float high = 1.f);
