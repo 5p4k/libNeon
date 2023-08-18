@@ -17,6 +17,10 @@ namespace neo {
         if (_rmt_chn == nullptr) {
             return ESP_ERR_INVALID_STATE;
         }
+        if (data.size() == 0) {
+            ESP_LOGW("NEO", "You are transmitting empty color data.");
+            return ESP_OK;
+        }
         return rmt_transmit(_rmt_chn, this, data.data(), data.size(), &rmt_transmit_config);
     }
 

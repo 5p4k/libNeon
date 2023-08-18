@@ -84,7 +84,7 @@ namespace neo {
     }
 
     constexpr auto channel_sequence::end() const {
-        return std::begin(sequence);
+        return std::end(sequence);
     }
 
     template <class Color, class OutputIterator, class Extractor>
