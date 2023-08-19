@@ -2,9 +2,11 @@
 // Created by spak on 8/19/23.
 //
 
+#include <neo/encoder.hpp>
 #include <neo/fx.hpp>
 
 namespace neo {
+    using namespace literals;
 
     void solid_fx::populate(alarm const &, mlab::range<srgb *> colors) {
         std::fill(std::begin(colors), std::end(colors), color);
@@ -56,11 +58,13 @@ namespace neo {
     }
 
     void transition_fx::populate(const neo::alarm &a, mlab::range<srgb *> colors) {
+        std::fill(std::begin(colors), std::end(colors), 0x0_rgb);
+
         pop_expired(a.total_elapsed());
         _buffer.clear();
         _buffer.resize(colors.size());
 
-        mlab::range<srgb *> rg{_buffer.data(), _buffer.data() + colors.size()};
+        mlab::range<srgb *> rg{_buffer.data(), _buffer.data() + _buffer.size()};
 
         for (transition const &item : _active_transitions) {
             if (item.is_complete(a.total_elapsed())) {
@@ -79,5 +83,13 @@ namespace neo {
 
     void transition_fx::transition_to(alarm const &a, std::shared_ptr<fx_base> fx, std::chrono::milliseconds duration) {
         _active_transitions.emplace_back(transition{a.total_elapsed(), duration, std::move(fx)});
+    }
+
+
+    std::function<void(alarm &)> fx_base::make_callback(led_encoder &encoder, std::size_t num_leds) {
+        return [fx = shared_from_this(), buffer = std::vector<neo::srgb>{num_leds}, enc = &encoder](neo::alarm &a) mutable {
+            fx->populate(a, {buffer.data(), buffer.data() + buffer.size()});
+            ESP_ERROR_CHECK(enc->transmit(std::begin(buffer), std::end(buffer), neo::srgb_linear_channel_extractor()));
+        };
     }
 }// namespace neo
