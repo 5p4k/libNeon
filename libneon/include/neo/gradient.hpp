@@ -49,7 +49,7 @@ namespace neo {
 
 
     template <class Container = std::vector<gradient_entry>>
-    [[nodiscard]] Container gradient_make_uniform_from_colors(std::initializer_list<srgb> colors);
+    [[nodiscard]] Container gradient_make_uniform_from_colors(std::vector<srgb> colors);
 
 }// namespace neo
 
@@ -145,7 +145,7 @@ namespace neo {
     }
 
     template <class Container>
-    Container gradient_make_uniform_from_colors(std::initializer_list<srgb> colors) {
+    Container gradient_make_uniform_from_colors(std::vector<srgb> colors) {
         Container c{};
         gradient_make_uniform_from_colors(std::begin(colors), std::end(colors), std::back_inserter(c));
         return c;
@@ -153,8 +153,8 @@ namespace neo {
 
     template <class FwdIt1, class FwdIt2, class OutIt>
     OutIt broadcast_blend(FwdIt1 l_begin, FwdIt1 l_end, FwdIt2 r_begin, FwdIt2 r_end, OutIt out, float t, blend_fn_t blend_fn) {
-        for (; l_begin != l_end and r_begin != r_end; ++l_begin, ++r_end) {
-            *(out++) = blend_fn(*l_begin, *l_end, t);
+        for (; l_begin != l_end and r_begin != r_end; ++l_begin, ++r_begin) {
+            *(out++) = blend_fn(*l_begin, *r_begin, t);
         }
         return out;
     }
