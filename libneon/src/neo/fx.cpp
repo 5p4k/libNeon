@@ -92,4 +92,25 @@ namespace neo {
             ESP_ERROR_CHECK(enc->transmit(std::begin(buffer), std::end(buffer), neo::srgb_linear_channel_extractor()));
         };
     }
+
+    void blend_fx::populate(const neo::alarm &a, mlab::range<srgb *> colors) {
+        _buffer.clear();
+        _buffer.resize(colors.size());
+        // Make it black so that we know what the state is
+        std::fill(std::begin(colors), std::end(colors), srgb{});
+
+        mlab::range<srgb *> rg{_buffer.data(), _buffer.data() + colors.size()};
+
+        if (lo) {
+            lo->populate(a, rg);
+        }
+        if (hi) {
+            hi->populate(a, colors);
+        }
+
+        broadcast_blend(std::begin(rg), std::end(rg),
+                        std::begin(colors), std::end(colors),
+                        std::begin(colors), blend_factor);
+    }
+
 }// namespace neo

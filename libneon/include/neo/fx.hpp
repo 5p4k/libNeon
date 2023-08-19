@@ -22,9 +22,6 @@ namespace neo {
         virtual ~fx_base() = default;
     };
 
-    template <class T>
-    [[nodiscard]] std::shared_ptr<T> wrap(T &&t);
-
     struct solid_fx : fx_base {
         srgb color = {};
 
@@ -47,16 +44,27 @@ namespace neo {
         void populate(alarm const &a, mlab::range<srgb *> colors) override;
     };
 
+    template <class>
+    struct is_fx_ptr : std::false_type {};
+    template <class T>
+        requires std::is_base_of_v<fx_base, T>
+    struct is_fx_ptr<std::shared_ptr<T>> : std::true_type {};
+
+    template <class T>
+    concept fx_or_fx_ptr = std::is_base_of_v<fx_base, std::remove_cvref_t<T>> or is_fx_ptr<std::remove_cvref_t<T>>::value;
+
+    template <fx_or_fx_ptr T>
+    [[nodiscard]] std::shared_ptr<fx_base> wrap(T &&fx);
+
+
     struct pulse_fx : fx_base {
         std::shared_ptr<fx_base> lo = {};
         std::shared_ptr<fx_base> hi = {};
         std::chrono::milliseconds cycle_time = 0ms;
 
         pulse_fx() = default;
-        inline pulse_fx(std::shared_ptr<fx_base> lo_, std::shared_ptr<fx_base> hi_, std::chrono::milliseconds cycle_time_ = 2s);
 
-        template <class Fx1, class Fx2>
-            requires std::is_base_of_v<fx_base, Fx1> and std::is_base_of_v<fx_base, Fx2>
+        template <fx_or_fx_ptr Fx1, fx_or_fx_ptr Fx2>
         pulse_fx(Fx1 lo_, Fx2 hi_, std::chrono::milliseconds cycle_time_ = 2s);
 
         void populate(alarm const &a, mlab::range<srgb *> colors) override;
@@ -87,6 +95,22 @@ namespace neo {
         void transition_to(alarm const &a, std::shared_ptr<fx_base> fx, std::chrono::milliseconds duration);
     };
 
+    struct blend_fx : fx_base {
+        std::shared_ptr<fx_base> lo = {};
+        std::shared_ptr<fx_base> hi = {};
+        float blend_factor = 0.5f;
+
+        blend_fx() = default;
+
+        template <fx_or_fx_ptr Fx1, fx_or_fx_ptr Fx2>
+        blend_fx(Fx1 lo_, Fx2 hi_, float blend_factor_ = 0.5f);
+
+        void populate(alarm const &a, mlab::range<srgb *> colors) override;
+
+    private:
+        std::vector<srgb> _buffer;
+    };
+
 }// namespace neo
 
 namespace neo {
@@ -102,18 +126,24 @@ namespace neo {
 
     solid_fx::solid_fx(neo::srgb color_) : color{color_} {}
 
-    pulse_fx::pulse_fx(std::shared_ptr<fx_base> lo_, std::shared_ptr<fx_base> hi_, std::chrono::milliseconds cycle_time_)
-        : lo{std::move(lo_)}, hi{std::move(hi_)}, cycle_time{cycle_time_} {}
-
-    template <class Fx1, class Fx2>
-        requires std::is_base_of_v<fx_base, Fx1> and std::is_base_of_v<fx_base, Fx2>
+    template <fx_or_fx_ptr Fx1, fx_or_fx_ptr Fx2>
     pulse_fx::pulse_fx(Fx1 lo_, Fx2 hi_, std::chrono::milliseconds cycle_time_)
         : lo{wrap(std::move(lo_))}, hi{wrap(std::move(hi_))}, cycle_time{cycle_time_} {}
 
-    template <class T>
-    std::shared_ptr<T> wrap(T &&t) {
-        return std::make_shared<T>(std::forward<T>(t));
+
+    template <fx_or_fx_ptr T>
+    [[nodiscard]] std::shared_ptr<fx_base> wrap(T &&fx) {
+        if constexpr (std::is_base_of_v<fx_base, std::remove_cvref_t<T>>) {
+            return std::static_pointer_cast<fx_base>(std::make_shared<std::remove_cvref_t<T>>(std::forward<T>(fx)));
+        } else {
+            return std::static_pointer_cast<fx_base>(std::forward<T>(fx));
+        }
     }
+
+    template <fx_or_fx_ptr Fx1, fx_or_fx_ptr Fx2>
+    blend_fx::blend_fx(Fx1 lo_, Fx2 hi_, float blend_factor_)
+        : lo{wrap(std::move(lo_))}, hi{wrap(std::move(hi_))}, blend_factor{blend_factor_} {}
+
 }// namespace neo
 
 #endif//LIBNEON_FX_HPP
