@@ -67,36 +67,14 @@ check format:
     - when: always
 
 
-build test firmware:
-  stage: build
-  image: ${CI_REGISTRY}/proj/testinator/esp32:latest
-  <<: *pio-cache
-  before_script:
-    - cp cicd/platformio.ini "${PIO_PROJ_FOLDER}/platformio.ini"
-    - cd "${PIO_PROJ_FOLDER}"
-  script:
-    # Remove the cached firmwares to ensure we will rebuild
-    - rm -f .pio/**/firmware.{bin,elf}
-    - pio run
-    - pio test --without-uploading --without-testing
-  artifacts:
-    paths:
-      - "${PIO_PROJ_FOLDER}/.pio/**/*.checksum"  # Without this, `pio run` deletes the firmware
-      - "${PIO_PROJ_FOLDER}/.pio/**/firmware.bin"
-      - "${PIO_PROJ_FOLDER}/.pio/**/firmware.elf"
-  rules:
-    - when: always
-
-
 build examples:
   image: ${CI_REGISTRY}/proj/testinator/esp32:latest
   stage: build
   <<: *pio-cache
-  script:  # Note that we need to setup sdkconfig.defaults before, so we make our own folder and we manage it ourselves
+  script:
     - >
       for file in ${PIO_LIB_FOLDER}/examples/*.cpp; do
         BUILD_DIR="$(mktemp -d)"
-        cp ${PIO_LIB_FOLDER}/examples/sdkconfig.defaults "${BUILD_DIR}"
         pio ci \
           --build-dir="${BUILD_DIR}" \
           --project-conf=cicd/platformio.ini \

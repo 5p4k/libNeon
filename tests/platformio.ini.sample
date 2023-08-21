@@ -10,7 +10,4 @@ framework = espidf
 
 build_flags = -Wall -Wextra
 
-; These settings allow to compile the tests with `pio run` as well as `pio test`
-test_transport = custom
 monitor_flags = --raw
-test_build_project_src = yes

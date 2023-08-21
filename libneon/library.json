@@ -1,7 +1,7 @@
 {
   "name": "libNeon",
-  "version": "1.0.0",
-  "description": "Neopixel driver library, effects included. Pure ESP-IDF and C++17.",
+  "version": "1.0.1",
+  "description": "Neopixel driver library, effects included. Pure ESP-IDF and C++20.",
   "license": "LGPL-3.0-only",
   "keywords": [
   ],
@@ -23,7 +23,6 @@
       "base": "examples",
       "files": [
         "simple_blink.cpp",
-        "sdkconfig.defaults",
         "platformio.ini"
       ]
     },
@@ -32,25 +31,38 @@
       "base": "examples",
       "files": [
         "static_gradient.cpp",
-        "sdkconfig.defaults",
         "platformio.ini"
       ]
     },
     {
-      "name": "Sliding gradient effect",
+      "name": "Rotating rainbow gradient effect",
       "base": "examples",
       "files": [
         "gradient_fx.cpp",
-        "sdkconfig.defaults",
         "platformio.ini"
       ]
     },
     {
-      "name": "Sliding matrix effect",
+      "name": "Double spinner effect",
       "base": "examples",
       "files": [
-        "matrix_fx.cpp",
-        "sdkconfig.defaults",
+        "spinner_fx.cpp",
+        "platformio.ini"
+      ]
+    },
+    {
+      "name": "Pulse color effect",
+      "base": "examples",
+      "files": [
+        "pulse_fx.cpp",
+        "platformio.ini"
+      ]
+    },
+    {
+      "name": "Compose and transition effects together",
+      "base": "examples",
+      "files": [
+        "composite_fx.cpp",
         "platformio.ini"
       ]
     }
