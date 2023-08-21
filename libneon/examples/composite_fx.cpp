@@ -16,7 +16,7 @@ extern "C" [[noreturn]] void app_main() {
             // Rainbow:
             neo::wrap(neo::gradient_fx{{0xff0000_rgb, 0xffff00_rgb, 0x00ff00_rgb, 0x00ffff_rgb, 0x0000ff_rgb, 0xff00ff_rgb, 0xff0000_rgb}, 5s}),
             // Spinner:
-            neo::wrap(neo::gradient_fx{{0x0_rgb, 0xffffff_rgb}, 2s, 2.f}),
+            neo::wrap(neo::gradient_fx{{{0.0, 0x0_rgb}, {0.1, 0x9999999_rgb}, {0.2, 0x444444_rgb}, {0.9, 0x0_rgb}}, 5s, 2.}),
             // Pulse red-yellow:
             neo::wrap(neo::pulse_fx{neo::solid_fx{0xff0000_rgb}, neo::solid_fx{0xffff00_rgb}, 2s}),
             // Pulse blue:
