@@ -1,3 +1,4 @@
+#include <esp_log.h>
 #include <esp_random.h>
 #include <neo/alarm.hpp>
 #include <neo/encoder.hpp>
