@@ -1,7 +1,7 @@
 {
   "name": "libNeon",
   "version": "1.0.1",
-  "description": "Neopixel driver library, effects included. Minimal dependencies.",
+  "description": "Neopixel driver library, effects included. No dependencies.",
   "license": "LGPL-3.0-only",
   "keywords": [
     "neopixel",
@@ -91,7 +91,5 @@
     "-Wall",
     "-Wextra"
   ],
-  "dependencies": {
-    "mittelab/mitteLib": "^1.0.4"
-  }
+  "dependencies": {}
 }

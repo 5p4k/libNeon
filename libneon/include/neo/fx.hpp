@@ -9,13 +9,17 @@
 #include <neo/alarm.hpp>
 #include <neo/color.hpp>
 #include <neo/gradient.hpp>
+#include <ranges>
+#include <vector>
 
 namespace neo {
 
     class led_encoder;
 
+    using color_range = std::ranges::subrange<std::vector<srgb>::iterator>;
+
     struct fx_base : public std::enable_shared_from_this<fx_base> {
-        virtual void populate(alarm const &a, mlab::range<srgb *> colors) = 0;
+        virtual void populate(alarm const &a, color_range colors) = 0;
 
         [[nodiscard]] std::function<void(alarm &)> make_callback(led_encoder &encoder, std::size_t num_leds);
 
@@ -29,7 +33,7 @@ namespace neo {
         inline explicit solid_fx(srgb color_);
 
 
-        void populate(alarm const &, mlab::range<srgb *> colors) override;
+        void populate(alarm const &, color_range colors) override;
     };
 
     struct gradient_fx : fx_base {
@@ -41,7 +45,7 @@ namespace neo {
         inline explicit gradient_fx(std::vector<gradient_entry> gradient_, std::chrono::milliseconds rotate_cycle_time_ = 2s, float scale_ = 1.f);
         inline explicit gradient_fx(std::vector<srgb> gradient_, std::chrono::milliseconds rotate_cycle_time_ = 2s, float scale_ = 1.f);
 
-        void populate(alarm const &a, mlab::range<srgb *> colors) override;
+        void populate(alarm const &a, color_range colors) override;
     };
 
     template <class>
@@ -67,7 +71,7 @@ namespace neo {
         template <fx_or_fx_ptr Fx1, fx_or_fx_ptr Fx2>
         pulse_fx(Fx1 lo_, Fx2 hi_, std::chrono::milliseconds cycle_time_ = 2s);
 
-        void populate(alarm const &a, mlab::range<srgb *> colors) override;
+        void populate(alarm const &a, color_range colors) override;
 
     private:
         std::vector<srgb> _buffer;
@@ -90,7 +94,7 @@ namespace neo {
 
     public:
         transition_fx() = default;
-        void populate(alarm const &a, mlab::range<srgb *> colors) override;
+        void populate(alarm const &a, color_range colors) override;
 
         void transition_to(alarm const &a, std::shared_ptr<fx_base> fx, std::chrono::milliseconds duration);
     };
@@ -105,7 +109,7 @@ namespace neo {
         template <fx_or_fx_ptr Fx1, fx_or_fx_ptr Fx2>
         blend_fx(Fx1 lo_, Fx2 hi_, float blend_factor_ = 0.5f);
 
-        void populate(alarm const &a, mlab::range<srgb *> colors) override;
+        void populate(alarm const &a, color_range colors) override;
 
     private:
         std::vector<srgb> _buffer;

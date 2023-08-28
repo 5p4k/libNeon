@@ -1,2 +1,2 @@
 # libNeon
-*Neopixel driver library, effects included.*
+*Neopixel driver library, effects included. No dependencies.*

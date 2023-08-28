@@ -8,22 +8,22 @@
 namespace neo {
     using namespace literals;
 
-    void solid_fx::populate(alarm const &, mlab::range<srgb *> colors) {
+    void solid_fx::populate(alarm const &, color_range colors) {
         std::fill(std::begin(colors), std::end(colors), color);
     }
 
-    void gradient_fx::populate(alarm const &a, mlab::range<srgb *> colors) {
+    void gradient_fx::populate(alarm const &a, color_range colors) {
         const float rotation = rotate_cycle_time > 0ms ? a.cycle_time(rotate_cycle_time) : 0.f;
         gradient_sample(std::begin(gradient), std::end(gradient), colors.size(), std::begin(colors), rotation, scale);
     }
 
-    void pulse_fx::populate(const neo::alarm &a, mlab::range<srgb *> colors) {
+    void pulse_fx::populate(const neo::alarm &a, color_range colors) {
         _buffer.clear();
         _buffer.resize(colors.size());
         // Make it black so that we know what the state is
         std::fill(std::begin(colors), std::end(colors), srgb{});
 
-        mlab::range<srgb *> rg{_buffer.data(), _buffer.data() + colors.size()};
+        color_range rg{_buffer};
 
         if (lo) {
             lo->populate(a, rg);
@@ -57,14 +57,14 @@ namespace neo {
         }
     }
 
-    void transition_fx::populate(const neo::alarm &a, mlab::range<srgb *> colors) {
+    void transition_fx::populate(const neo::alarm &a, color_range colors) {
         std::fill(std::begin(colors), std::end(colors), 0x0_rgb);
 
         pop_expired(a.total_elapsed());
         _buffer.clear();
         _buffer.resize(colors.size());
 
-        mlab::range<srgb *> rg{_buffer.data(), _buffer.data() + _buffer.size()};
+        color_range rg{_buffer};
 
         for (transition const &item : _active_transitions) {
             if (item.is_complete(a.total_elapsed())) {
@@ -88,18 +88,18 @@ namespace neo {
 
     std::function<void(alarm &)> fx_base::make_callback(led_encoder &encoder, std::size_t num_leds) {
         return [fx = shared_from_this(), buffer = std::vector<neo::srgb>{num_leds}, enc = &encoder](neo::alarm &a) mutable {
-            fx->populate(a, {buffer.data(), buffer.data() + buffer.size()});
+            fx->populate(a, buffer);
             ESP_ERROR_CHECK(enc->transmit(std::begin(buffer), std::end(buffer), neo::srgb_linear_channel_extractor()));
         };
     }
 
-    void blend_fx::populate(const neo::alarm &a, mlab::range<srgb *> colors) {
+    void blend_fx::populate(const neo::alarm &a, color_range colors) {
         _buffer.clear();
         _buffer.resize(colors.size());
         // Make it black so that we know what the state is
         std::fill(std::begin(colors), std::end(colors), srgb{});
 
-        mlab::range<srgb *> rg{_buffer.data(), _buffer.data() + colors.size()};
+        color_range rg{_buffer};
 
         if (lo) {
             lo->populate(a, rg);

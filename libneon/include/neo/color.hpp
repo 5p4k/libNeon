@@ -6,7 +6,6 @@
 #define NEO_COLOR_HPP
 
 #include <array>
-#include <mlab/bin_data.hpp>
 #include <neo/channel.hpp>
 #include <neo/math.hpp>
 
@@ -138,10 +137,5 @@ namespace neo {
     constexpr hsv::hsv(float h_, float s_, float v_) : h{h_}, s{s_}, v{v_} {}
 
 }// namespace neo
-
-namespace mlab {
-    bin_data &operator<<(bin_data &o, neo::srgb c);
-    bin_stream &operator>>(bin_stream &i, neo::srgb &c);
-}// namespace mlab
 
 #endif//NEO_COLOR_HPP
