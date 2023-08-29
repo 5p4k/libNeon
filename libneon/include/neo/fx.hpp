@@ -97,6 +97,9 @@ namespace neo {
         void populate(alarm const &a, color_range colors) override;
 
         void transition_to(alarm const &a, std::shared_ptr<fx_base> fx, std::chrono::milliseconds duration);
+
+        template <fx_or_fx_ptr Fx>
+        void transition_to(alarm const &a, Fx fx, std::chrono::milliseconds duration);
     };
 
     struct blend_fx : fx_base {
@@ -148,6 +151,11 @@ namespace neo {
     blend_fx::blend_fx(Fx1 lo_, Fx2 hi_, float blend_factor_)
         : lo{wrap(std::move(lo_))}, hi{wrap(std::move(hi_))}, blend_factor{blend_factor_} {}
 
+
+    template <fx_or_fx_ptr Fx>
+    void transition_fx::transition_to(alarm const &a, Fx fx, std::chrono::milliseconds duration) {
+        transition_to(a, neo::wrap(std::move(fx)), duration);
+    }
 }// namespace neo
 
 #endif//LIBNEON_FX_HPP
