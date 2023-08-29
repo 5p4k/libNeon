@@ -1,5 +1,6 @@
 #include <neo/alarm.hpp>
 #include <neo/encoder.hpp>
+#include <neo/fx.hpp>
 #include <neo/gradient.hpp>
 
 static constexpr gpio_num_t strip_gpio_pin = GPIO_NUM_13;
@@ -11,13 +12,9 @@ using namespace neo::literals;
 extern "C" void app_main() {
     neo::led_encoder encoder{neo::encoding::ws2812b, neo::make_rmt_config(strip_gpio_pin)};
 
-    auto animate = [&, i = std::size_t{0}, buffer = std::vector<neo::srgb>{strip_num_leds}](neo::alarm &a) mutable {
-        buffer[i++ % strip_num_leds] = 0x0_rgb;
-        buffer[i % strip_num_leds] = 0xaaaaaa_rgb;
-        ESP_ERROR_CHECK(encoder.transmit(std::begin(buffer), std::end(buffer)));
-    };
+    const auto pulse_fx = neo::wrap(neo::pulse_fx{neo::solid_fx{0x0_rgb}, neo::solid_fx{0x7fc0c2_rgb}, 4s});
 
-    neo::alarm alarm{1_fps, animate};
+    neo::alarm alarm{30_fps, pulse_fx->make_callback(encoder, strip_num_leds)};
     alarm.start();
 
     vTaskSuspend(nullptr);

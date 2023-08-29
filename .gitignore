@@ -11,3 +11,6 @@ sdkconfig
 sdkconfig.*
 docs/_build
 compile_commands.json.bak
+demo
+libneon/README.md
+libneon/LICENSE

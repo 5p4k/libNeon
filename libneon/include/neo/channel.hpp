@@ -5,8 +5,9 @@
 #ifndef LIBNEON_CHANNEL_HPP
 #define LIBNEON_CHANNEL_HPP
 
-#include <string_view>
 #include <bit>
+#include <string_view>
+#include <vector>
 
 namespace neo {
 
@@ -21,69 +22,34 @@ namespace neo {
     };
 
     template <class Color>
-    struct channel_extractor {
-        [[nodiscard]] constexpr std::uint8_t extract(Color col, channel chn) {
-            return col[chn];
-        }
+    struct default_channel_extractor {
+        [[nodiscard]] constexpr std::uint8_t operator()(Color col, channel chn) const;
     };
 
     struct channel_sequence {
-        std::string_view sequence;
-
-        struct const_iterator {
-            std::string_view::const_iterator iterator;
-
-            constexpr explicit const_iterator(std::string_view::const_iterator it) : iterator{it} {}
-
-            constexpr const_iterator &operator++() {
-                ++iterator;
-                return *this;
-            }
-
-            constexpr channel operator*() const {
-                return std::bit_cast<channel>(*iterator);
-            }
-
-            constexpr bool operator==(const_iterator const &it) const {
-                return it.iterator == iterator;
-            }
-
-            constexpr bool operator!=(const_iterator const &it) const {
-                return it.iterator != iterator;
-            }
-        };
+        std::string_view sequence{};
 
         constexpr channel_sequence() = default;
 
-        explicit constexpr channel_sequence(std::string_view seq) : sequence{seq} {}
+        explicit constexpr channel_sequence(std::string_view seq);
 
-        constexpr channel_sequence(const char *const seq) : sequence{seq} {}
+        constexpr channel_sequence(const char *seq);
 
-        [[nodiscard]] constexpr std::size_t size() const {
-            return sequence.size();
-        }
+        [[nodiscard]] constexpr std::size_t size() const;
 
-        constexpr bool operator==(channel_sequence const &other) const {
-            return sequence == other.sequence;
-        }
+        constexpr bool operator==(channel_sequence const &other) const;
 
-        constexpr bool operator!=(channel_sequence const &other) const {
-            return sequence == other.sequence;
-        }
+        constexpr bool operator!=(channel_sequence const &other) const;
 
-        [[nodiscard]] constexpr const_iterator begin() const {
-            return const_iterator{std::begin(sequence)};
-        }
+        [[nodiscard]] constexpr auto begin() const;
 
-        [[nodiscard]] constexpr const_iterator end() const {
-            return const_iterator{std::end(sequence)};
-        }
+        [[nodiscard]] constexpr auto end() const;
 
-        template <class Color, class OutputIterator>
-        OutputIterator extract(Color const &col, OutputIterator out) const;
+        template <class Color, class OutputIterator, class Extractor = default_channel_extractor<Color>>
+        OutputIterator extract(Color const &col, OutputIterator out, Extractor const &extractor = {}) const;
 
-        template <class ColorIterator, class OutputIterator>
-        OutputIterator extract(ColorIterator begin, ColorIterator end, OutputIterator out) const;
+        template <class ColorIterator, class OutputIterator, class Extractor = default_channel_extractor<std::iter_value_t<ColorIterator>>>
+        OutputIterator extract(ColorIterator begin, ColorIterator end, OutputIterator out, Extractor const &extractor = {}) const;
 
         template <class Color>
         [[nodiscard]] std::vector<std::uint8_t> extract(Color const &col) const;
@@ -93,21 +59,48 @@ namespace neo {
 
 namespace neo {
 
-    template <class Color, class OutputIterator>
-    OutputIterator channel_sequence::extract(Color const &col, OutputIterator out) const {
-        auto extractor = channel_extractor<Color>{};
+    template <class Color>
+    constexpr std::uint8_t default_channel_extractor<Color>::operator()(Color col, channel chn) const {
+        return col[chn];
+    }
+
+    constexpr channel_sequence::channel_sequence(std::string_view seq) : sequence{seq} {}
+
+    constexpr channel_sequence::channel_sequence(const char *seq) : sequence{seq} {}
+
+    constexpr std::size_t channel_sequence::size() const {
+        return sequence.size();
+    }
+
+    constexpr bool channel_sequence::operator==(channel_sequence const &other) const {
+        return sequence == other.sequence;
+    }
+
+    constexpr bool channel_sequence::operator!=(channel_sequence const &other) const {
+        return sequence == other.sequence;
+    }
+
+    constexpr auto channel_sequence::begin() const {
+        return std::begin(sequence);
+    }
+
+    constexpr auto channel_sequence::end() const {
+        return std::end(sequence);
+    }
+
+    template <class Color, class OutputIterator, class Extractor>
+    OutputIterator channel_sequence::extract(Color const &col, OutputIterator out, Extractor const &extractor) const {
         for (auto chn : *this) {
-            *(out++) = extractor.extract(col, chn);
+            *(out++) = extractor(col, std::bit_cast<channel>(chn));
         }
         return out;
     }
 
-    template <class ColorIterator, class OutputIterator>
-    OutputIterator channel_sequence::extract(ColorIterator begin, ColorIterator end, OutputIterator out) const {
-        auto extractor = channel_extractor<std::iter_value_t<ColorIterator>>{};
+    template <class ColorIterator, class OutputIterator, class Extractor>
+    OutputIterator channel_sequence::extract(ColorIterator begin, ColorIterator end, OutputIterator out, Extractor const &extractor) const {
         for (auto it = begin; it != end; ++it) {
             for (auto chn : *this) {
-                *(out++) = extractor.extract(*it, chn);
+                *(out++) = extractor(*it, std::bit_cast<channel>(chn));
             }
         }
         return out;

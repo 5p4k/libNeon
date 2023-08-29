@@ -1,11 +1,22 @@
 {
   "name": "libNeon",
-  "version": "1.0.0",
-  "description": "Neopixel driver library, effects included. Pure ESP-IDF and C++17.",
+  "version": "1.0.1",
+  "description": "Neopixel driver library using RMT, effects included. No dependencies.",
   "license": "LGPL-3.0-only",
   "keywords": [
+    "neopixel",
+    "led",
+    "rmt",
+    "effects",
+    "fx",
+    "color",
+    "gradient",
+    "animation",
+    "c++20",
+    "cxx20",
+    "esp-idf"
   ],
-  "homepage": "https://5p4k.mittelab.dev/libneon",
+  "homepage": "https://git.mittelab.org/5p4k/libneon",
   "repository": {
     "type": "git",
     "url": "https://git.mittelab.org/5p4k/libneon.git"
@@ -23,7 +34,6 @@
       "base": "examples",
       "files": [
         "simple_blink.cpp",
-        "sdkconfig.defaults",
         "platformio.ini"
       ]
     },
@@ -32,25 +42,38 @@
       "base": "examples",
       "files": [
         "static_gradient.cpp",
-        "sdkconfig.defaults",
         "platformio.ini"
       ]
     },
     {
-      "name": "Sliding gradient effect",
+      "name": "Rotating rainbow gradient effect",
       "base": "examples",
       "files": [
         "gradient_fx.cpp",
-        "sdkconfig.defaults",
         "platformio.ini"
       ]
     },
     {
-      "name": "Sliding matrix effect",
+      "name": "Double spinner effect",
       "base": "examples",
       "files": [
-        "matrix_fx.cpp",
-        "sdkconfig.defaults",
+        "spinner_fx.cpp",
+        "platformio.ini"
+      ]
+    },
+    {
+      "name": "Pulse color effect",
+      "base": "examples",
+      "files": [
+        "pulse_fx.cpp",
+        "platformio.ini"
+      ]
+    },
+    {
+      "name": "Compose and transition effects together",
+      "base": "examples",
+      "files": [
+        "composite_fx.cpp",
         "platformio.ini"
       ]
     }
@@ -65,18 +88,8 @@
   "frameworks": "espidf",
   "platforms": "espressif32",
   "flags": [
-    "-std=gnu++17",
     "-Wall",
     "-Wextra"
   ],
-  "unflags": [
-    "-std=gnu++11",
-    "-std=gnu++14",
-    "-std=c++11",
-    "-std=c++14",
-    "-std=c++17"
-  ],
-  "dependencies": {
-    "mittelab/mitteLib": "^1.0.4"
-  }
+  "dependencies": {}
 }

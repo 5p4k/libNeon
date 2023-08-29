@@ -5,242 +5,158 @@
 #ifndef NEO_GRADIENT_HPP
 #define NEO_GRADIENT_HPP
 
-#include <mlab/bin_data.hpp>
 #include <neo/color.hpp>
-#include <vector>
+#include <neo/math.hpp>
 
 namespace neo {
-    using blending_method = rgb (&)(rgb l, rgb r, float t);
+    using blend_fn_t = srgb (&)(srgb l, srgb r, float t);
 
-    [[maybe_unused]] rgb blend_linear(rgb l, rgb r, float t);
-    [[maybe_unused]] rgb blend_round_down(rgb l, rgb, float);
-    [[maybe_unused]] rgb blend_round_up(rgb, rgb r, float);
-    [[maybe_unused]] rgb blend_nearest_neighbor(rgb l, rgb r, float t);
+    [[maybe_unused]] [[nodiscard]] inline srgb blend_lerp(srgb l, srgb r, float t);
+    [[maybe_unused]] [[nodiscard]] inline srgb blend_linear(srgb l, srgb r, float t);
+    [[maybe_unused]] [[nodiscard]] inline srgb blend_round_down(srgb l, srgb, float);
+    [[maybe_unused]] [[nodiscard]] inline srgb blend_round_up(srgb, srgb r, float);
+    [[maybe_unused]] [[nodiscard]] inline srgb blend_nearest_neighbor(srgb l, srgb r, float t);
 
-    class gradient_entry;
-    class fixed_gradient_entry;
+    template <class FwdIt1, class FwdIt2, class OutIt>
+    OutIt broadcast_blend(FwdIt1 l_begin, FwdIt1 l_end, FwdIt2 r_begin, FwdIt2 r_end, OutIt out, float t, blend_fn_t blend_fn = blend_linear);
+
+    struct gradient_entry {
+        float pos = 0.f;
+        srgb col = {};
+
+        constexpr gradient_entry() = default;
+        constexpr gradient_entry(float pos_, srgb col_) : pos{pos_}, col{col_} {}
+    };
+
+    struct safe_less {
+        [[nodiscard]] constexpr bool operator()(float l, float r) const;
+
+        [[nodiscard]] constexpr bool operator()(gradient_entry const &l, float r) const;
+
+        [[nodiscard]] constexpr bool operator()(float l, gradient_entry const &r) const;
+
+        [[nodiscard]] constexpr bool operator()(gradient_entry const &l, gradient_entry const &r) const;
+    };
+
+    template <class It, class OutIt>
+    OutIt gradient_sample(It begin, It end, std::size_t n, OutIt out, float rotate = 0.f, float scale = 1.f, blend_fn_t blend_fn = blend_linear);
+
+    template <class It>
+    void gradient_normalize(It begin, It end);
+
+    template <class It, class OutIt>
+    OutIt gradient_make_uniform_from_colors(It begin, It end, OutIt out);
+
+
+    template <class Container = std::vector<gradient_entry>>
+    [[nodiscard]] Container gradient_make_uniform_from_colors(std::vector<srgb> colors);
+
 }// namespace neo
 
-namespace mlab {
-    bin_stream &operator>>(bin_stream &i, neo::gradient_entry &ge);
-    bin_data &operator<<(bin_data &o, neo::fixed_gradient_entry const &fge);
-}// namespace mlab
-
 namespace neo {
-
-    class fixed_gradient_entry {
-    protected:
-        float _time = 0.f;
-        rgb _color = rgb{};
-
-        fixed_gradient_entry &operator=(fixed_gradient_entry const &) = default;
-
-        fixed_gradient_entry &operator=(fixed_gradient_entry &&) noexcept = default;
-
-        friend mlab::bin_stream &mlab::operator>>(mlab::bin_stream &, neo::gradient_entry &);
-
-    public:
-        [[nodiscard]] inline float time() const;
-
-        [[nodiscard]] inline rgb color() const;
-
-        inline void set_color(rgb color);
-
-        fixed_gradient_entry() = default;
-
-        fixed_gradient_entry(fixed_gradient_entry const &) = default;
-
-        fixed_gradient_entry(fixed_gradient_entry &&) noexcept = default;
-
-        inline fixed_gradient_entry(float t, rgb c);
-
-        inline fixed_gradient_entry &operator=(rgb c);
-
-        [[nodiscard]] std::string to_string() const;
-    };
-
-    class gradient_entry : protected fixed_gradient_entry {
-        friend class gradient;
-        friend mlab::bin_stream &mlab::operator>>(mlab::bin_stream &, gradient_entry &);
-
-    public:
-        using fixed_gradient_entry::fixed_gradient_entry;
-        using fixed_gradient_entry::operator=;
-        using fixed_gradient_entry::color;
-        using fixed_gradient_entry::set_color;
-        using fixed_gradient_entry::time;
-
-        inline void set_time(float t);
-
-        gradient_entry() = default;
-
-        gradient_entry(gradient_entry const &) = default;
-
-        gradient_entry(gradient_entry &&) noexcept = default;
-
-        gradient_entry &operator=(gradient_entry const &) = default;
-
-        gradient_entry &operator=(gradient_entry &&) noexcept = default;
-    };
-
-    class gradient {
-        std::vector<gradient_entry> _entries;
-
-    public:
-        using iterator = gradient_entry *;
-        using const_iterator = fixed_gradient_entry const *;
-
-        gradient() = default;
-        explicit gradient(std::vector<gradient_entry> entries);
-        explicit gradient(std::vector<fixed_gradient_entry> const &entries);
-        explicit gradient(std::vector<rgb> const &colors);
-        explicit gradient(std::vector<hsv> const &colors);
-
-        [[nodiscard]] inline std::size_t size() const;
-
-        [[nodiscard]] inline bool empty() const;
-
-        [[nodiscard]] inline const_iterator begin() const;
-
-        [[nodiscard]] inline const_iterator end() const;
-
-        [[nodiscard]] inline iterator begin();
-
-        [[nodiscard]] inline iterator end();
-
-        [[nodiscard]] inline fixed_gradient_entry &front();
-
-        [[nodiscard]] inline fixed_gradient_entry &back();
-
-        [[nodiscard]] inline fixed_gradient_entry const &front() const;
-
-        [[nodiscard]] inline fixed_gradient_entry const &back() const;
-
-        inline std::pair<iterator, bool> emplace(fixed_gradient_entry entry);
-
-        std::pair<iterator, bool> emplace(gradient_entry entry);
-
-        [[nodiscard]] const_iterator lower_bound(float t) const;
-
-        [[nodiscard]] const_iterator upper_bound(float t) const;
-
-        void normalize();
-
-        [[nodiscard]] inline fixed_gradient_entry const &operator[](std::size_t i) const;
-        [[nodiscard]] inline fixed_gradient_entry &operator[](std::size_t i);
-
-        [[nodiscard]] rgb sample(float t, blending_method method = blend_linear) const;
-        [[nodiscard]] rgb sample(float progress, float offset = 0.f, float repeat = 1.f, blending_method method = blend_linear) const;
-
-        [[deprecated]] void sample_uniform(float period, float offset, std::vector<rgb> &buffer,
-                            blending_method method = blend_linear) const;
-
-        [[deprecated]] std::vector<rgb> sample_uniform(float period, float offset, std::size_t num_samples,
-                                        std::vector<rgb> reuse_buffer = {}, blending_method method = blend_linear) const;
-
-        template <class OutputIterator>
-        OutputIterator fill(OutputIterator begin, OutputIterator end, float offset = 0.f, float repeat = 1.f, blending_method method = blend_linear) const;
-
-        template <class OutputIterator>
-        OutputIterator fill_n(OutputIterator out, std::size_t num, float offset = 0.f, float repeat = 1.f, blending_method method = blend_linear) const;
-
-        [[nodiscard]] std::string to_string() const;
-    };
-}// namespace neo
-
-namespace mlab {
-    bin_data &operator<<(bin_data &o, neo::gradient const &g);
-    bin_stream &operator>>(bin_stream &i, neo::gradient &g);
-}// namespace mlab
-
-namespace neo {
-
-    template <class OutputIterator>
-    OutputIterator gradient::fill(OutputIterator begin, OutputIterator end, float offset, float repeat, blending_method method) const {
-        return fill_n(begin, std::distance(begin, end), offset, repeat, method);
+    constexpr bool safe_less::operator()(float l, float r) const {
+        return std::abs(l - r) > std::numeric_limits<float>::epsilon() and l < r;
     }
 
-    template <class OutputIterator>
-    OutputIterator gradient::fill_n(OutputIterator out, std::size_t num, float offset, float repeat, blending_method method) const {
-        for (std::size_t i = 0; i < num; ++i) {
-            *(out++) = sample(float(i) / float(num), offset, repeat, method);
+    constexpr bool safe_less::operator()(gradient_entry const &l, float r) const {
+        return (*this)(l.pos, r);
+    }
+
+    constexpr bool safe_less::operator()(float l, gradient_entry const &r) const {
+        return (*this)(l, r.pos);
+    }
+
+    constexpr bool safe_less::operator()(gradient_entry const &l, gradient_entry const &r) const {
+        return (*this)(l.pos, r.pos);
+    }
+
+    srgb blend_lerp(srgb l, srgb r, float t) {
+        return l.lerp(r, t);
+    }
+
+    srgb blend_linear(srgb l, srgb r, float t) {
+        return l.blend(r, t);
+    }
+
+    srgb blend_round_down(srgb l, srgb, float) {
+        return l;
+    }
+
+    srgb blend_round_up(srgb, srgb r, float) {
+        return r;
+    }
+
+    srgb blend_nearest_neighbor(srgb l, srgb r, float t) {
+        return safe_less{}(t, 0.5f) ? l : r;
+    }
+
+    template <class It, class OutIt>
+    OutIt gradient_sample(It begin, It end, std::size_t n, OutIt out, float rotate, float scale, blend_fn_t blend_fn) {
+        if (begin == end) {
+            return out;
+        }
+        constexpr auto less = safe_less{};
+        auto ub = begin;
+        auto last_t = std::numeric_limits<float>::infinity();
+        for (std::size_t i = 0; i < n; ++i) {
+            const float t = modclamp(scale * (rotate + float(i) / float(n)), 0.f, 1.f);
+            ub = std::upper_bound(less(t, last_t) ? begin : ub, end, t, less);
+            last_t = t;
+            if (ub == begin) {
+                *(out++) = begin->col;
+                continue;
+            }
+            auto lb = std::prev(ub);
+            if (ub == end) {
+                *(out++) = lb->col;
+                continue;
+            }
+            const float blend_f = std::clamp((t - lb->pos) / (ub->pos - lb->pos), 0.f, 1.f);
+            *(out++) = blend_fn(lb->col, ub->col, blend_f);
         }
         return out;
     }
 
-    bool gradient::empty() const {
-        return _entries.empty();
+
+    template <class It>
+    void gradient_normalize(It begin, It end) {
+        std::sort(begin, end, safe_less{});
+        float lo = std::numeric_limits<float>::infinity();
+        float hi = -lo;
+        for (auto it = begin; begin != end; ++it) {
+            lo = std::min(lo, it->pos);
+            hi = std::max(hi, it->pos);
+        }
+        for (auto it = begin; it != end; ++it) {
+            it->pos = std::clamp((it->pos - lo) / (hi - lo), 0.f, 1.f);
+        }
     }
 
-    std::size_t gradient::size() const {
-        return _entries.size();
+    template <class It, class OutIt>
+    OutIt gradient_make_uniform_from_colors(It begin, It end, OutIt out) {
+        if (begin == end) {
+            return out;
+        }
+        const float dt = 1.f / std::max(float(std::distance(begin, end) - 1), 1.f);
+        for (auto t = 0.f; begin != end; ++begin, t += dt) {
+            *(out++) = {t, *begin};
+        }
+        return out;
     }
 
-
-    gradient::const_iterator gradient::begin() const {
-        return _entries.data();
+    template <class Container>
+    Container gradient_make_uniform_from_colors(std::vector<srgb> colors) {
+        Container c{};
+        gradient_make_uniform_from_colors(std::begin(colors), std::end(colors), std::back_inserter(c));
+        return c;
     }
 
-    gradient::const_iterator gradient::end() const {
-        return begin() + size();
-    }
-
-    gradient::iterator gradient::begin() {
-        return _entries.data();
-    }
-
-    gradient::iterator gradient::end() {
-        return begin() + size();
-    }
-
-    fixed_gradient_entry &gradient::front() {
-        return _entries.front();
-    }
-
-    fixed_gradient_entry &gradient::back() {
-        return _entries.back();
-    }
-
-    fixed_gradient_entry const &gradient::front() const {
-        return _entries.front();
-    }
-
-    fixed_gradient_entry const &gradient::back() const {
-        return _entries.back();
-    }
-
-    void fixed_gradient_entry::set_color(rgb color) {
-        _color = color;
-    }
-
-    fixed_gradient_entry::fixed_gradient_entry(float t, rgb c) : _time{t}, _color{c} {}
-
-    float fixed_gradient_entry::time() const {
-        return _time;
-    }
-
-    rgb fixed_gradient_entry::color() const {
-        return _color;
-    }
-
-    fixed_gradient_entry &fixed_gradient_entry::operator=(rgb c) {
-        set_color(c);
-        return *this;
-    }
-
-    void gradient_entry::set_time(float t) {
-        _time = t;
-    }
-
-    std::pair<gradient::iterator, bool> gradient::emplace(fixed_gradient_entry entry) {
-        return emplace(gradient_entry{entry.time(), entry.color()});
-    }
-
-    fixed_gradient_entry const &gradient::operator[](std::size_t i) const {
-        return _entries.at(i);
-    }
-    fixed_gradient_entry &gradient::operator[](std::size_t i) {
-        return _entries.at(i);
+    template <class FwdIt1, class FwdIt2, class OutIt>
+    OutIt broadcast_blend(FwdIt1 l_begin, FwdIt1 l_end, FwdIt2 r_begin, FwdIt2 r_end, OutIt out, float t, blend_fn_t blend_fn) {
+        for (; l_begin != l_end and r_begin != r_end; ++l_begin, ++r_begin) {
+            *(out++) = blend_fn(*l_begin, *r_begin, t);
+        }
+        return out;
     }
 }// namespace neo
 #endif//NEO_GRADIENT_HPP

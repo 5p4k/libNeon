@@ -13,9 +13,13 @@ namespace neo {
         constexpr rmt_transmit_config_t rmt_transmit_config{.loop_count = 0, .flags = {.eot_level = 0}};
     }// namespace
 
-    esp_err_t led_encoder::transmit_raw(mlab::range<std::uint8_t const *> data) {
+    esp_err_t led_encoder::transmit_raw(const_byte_range data) {
         if (_rmt_chn == nullptr) {
             return ESP_ERR_INVALID_STATE;
+        }
+        if (data.empty()) {
+            ESP_LOGW("NEO", "You are transmitting empty color data.");
+            return ESP_OK;
         }
         return rmt_transmit(_rmt_chn, this, data.data(), data.size(), &rmt_transmit_config);
     }

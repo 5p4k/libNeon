@@ -2,9 +2,10 @@
 // Created by spak on 6/7/21.
 //
 
-#include <esp_log.h>
-#include <neo/timer.hpp>
 #include <cmath>
+#include <esp_log.h>
+#include <neo/math.hpp>
+#include <neo/timer.hpp>
 
 
 namespace neo {
@@ -56,11 +57,7 @@ namespace neo {
     }
 
     float timer::cycle_time(std::chrono::milliseconds wanted_period, std::chrono::milliseconds offset) const {
-        auto t = float((total_elapsed() + offset).count()) / float(wanted_period.count());
-        // This ensures it's in [0..1]
-        t -= std::floor(t);
-        assert(-std::numeric_limits<float>::epsilon() < t and t < std::nextafter(1.f, 2.f));
-        return t;
+        return modclamp(float((total_elapsed() + offset).count()) / float(wanted_period.count()));
     }
 
     timer::timer()
@@ -72,7 +69,7 @@ namespace neo {
         ESP_ERROR_CHECK(gptimer_enable(_hdl));
     }
 
-     timer::~timer() {
+    timer::~timer() {
         stop();
         ESP_ERROR_CHECK(gptimer_disable(_hdl));
         ESP_ERROR_CHECK(gptimer_del_timer(_hdl));

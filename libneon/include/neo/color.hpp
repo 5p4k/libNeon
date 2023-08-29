@@ -5,213 +5,137 @@
 #ifndef NEO_COLOR_HPP
 #define NEO_COLOR_HPP
 
-#include <algorithm>
 #include <array>
-#include <cstdint>
 #include <neo/channel.hpp>
-#include <mlab/bin_data.hpp>
+#include <neo/math.hpp>
 
 namespace neo {
-    struct rgb;
+    struct srgb;
     struct hsv;
 
     namespace literals {
-        inline rgb operator ""_rgb(unsigned long long int);
+        constexpr srgb operator""_rgb(unsigned long long int);
     }
-
-    struct keep_t {
-    };
-
-    static constexpr keep_t keep{};
-
-    template <class T>
-    struct maybe_update {
-        const bool update;
-        T value;
-
-        maybe_update(keep_t);
-
-        maybe_update(T value_);
-
-        void set(T &target) const;
-
-        template <class U>
-        void add(U &target) const;
-    };
-
-    [[nodiscard]] float srgb_to_linear(std::uint8_t v);
-    [[nodiscard]] std::uint8_t linear_to_srgb(float v);
 
     /**
      * The values are expressed in sRGB color space.
      */
-    struct rgb {
+    struct srgb {
         std::uint8_t r = 0;
         std::uint8_t g = 0;
         std::uint8_t b = 0;
 
-        rgb() = default;
+        constexpr srgb() = default;
 
-        explicit inline rgb(std::uint32_t rgb_);
+        explicit constexpr srgb(std::uint32_t rgb_);
 
-        inline rgb(std::uint8_t r_, std::uint8_t g_, std::uint8_t b_);
+        constexpr srgb(std::uint8_t r_, std::uint8_t g_, std::uint8_t b_);
 
-        rgb &update(maybe_update<std::uint8_t> r_, maybe_update<std::uint8_t> g_, maybe_update<std::uint8_t> b_);
-        [[nodiscard]] inline rgb update(maybe_update<std::uint8_t> r_, maybe_update<std::uint8_t> g_, maybe_update<std::uint8_t> b_) const;
-
-        rgb &shift(maybe_update<signed> dr, maybe_update<signed> dg, maybe_update<signed> db);
-        [[nodiscard]] inline rgb shift(maybe_update<signed> dr, maybe_update<signed> dg, maybe_update<signed> db) const;
-
-        inline rgb &shift(rgb delta, bool negate = false);
-        [[nodiscard]] inline rgb shift(rgb delta, bool negate = false) const;
-
-        /**
-         * @todo Deprecate and return a value
-         * @return
-         */
-        rgb &blend(rgb target, float factor);
-        [[nodiscard]] inline rgb blend(rgb target, float factor) const;
+        [[nodiscard]] srgb blend(srgb target, float factor) const;
+        [[nodiscard]] srgb lerp(srgb target, float factor) const;
 
         [[nodiscard]] hsv to_hsv() const;
 
-        [[nodiscard]] std::array<float, 3> to_linear_rgb() const;
-        [[nodiscard]] static rgb from_linear_rgb(std::array<float, 3> const &linear_rgb);
+        [[nodiscard]] constexpr static float to_linear(std::uint8_t v);
+        [[nodiscard]] constexpr static std::uint8_t from_linear(float v);
+
+        [[nodiscard]] constexpr static std::array<float, 3> to_linear(srgb const &rgb);
+        [[nodiscard]] constexpr static srgb from_linear(std::array<float, 3> const &linear_rgb);
 
         [[nodiscard]] std::string to_string() const;
 
-        [[nodiscard]] constexpr std::uint8_t operator[](channel c) const {
-            switch (c) {
-                case channel::r: return r;
-                case channel::g: return g;
-                case channel::b: return b;
-            }
-            return 0;
-        }
+        [[nodiscard]] constexpr std::uint8_t operator[](channel c) const;
     };
+
+    struct srgb_gamma_channel_extractor {
+        std::array<std::uint8_t, 0x100> lut;
+
+        constexpr explicit srgb_gamma_channel_extractor(float gamma = 1.f);
+
+        [[nodiscard]] constexpr std::uint8_t operator()(srgb col, channel chn) const;
+    };
+
+    /**
+     * @todo Deprecate when it can become constexpr (need constexpr std::pow)
+     */
+    [[nodiscard]] srgb_gamma_channel_extractor const &srgb_linear_channel_extractor();
 
     struct hsv {
         float h = 0.f;
         float s = 0.f;
         float v = 0.f;
 
-        hsv() = default;
+        constexpr hsv() = default;
 
-        inline hsv(float h_, float s_, float v_);
+        constexpr hsv(float h_, float s_, float v_);
 
-        hsv &clamp();
+        [[nodiscard]] hsv clamped() const;
 
-        hsv &update(maybe_update<float> h_, maybe_update<float> s_, maybe_update<float> v_);
-        [[nodiscard]] inline hsv update(maybe_update<float> h_, maybe_update<float> s_, maybe_update<float> v_) const;
-
-        hsv &shift(maybe_update<float> dh, maybe_update<float> ds, maybe_update<float> dv);
-        [[nodiscard]] inline hsv shift(maybe_update<float> dh, maybe_update<float> ds, maybe_update<float> dv) const;
-
-        inline hsv &shift(hsv delta, bool negate = false);
-        [[nodiscard]] inline hsv shift(hsv delta, bool negate = false) const;
-
-        [[nodiscard]] rgb to_rgb() const;
+        [[nodiscard]] srgb to_rgb() const;
     };
 
 }// namespace neo
 
 namespace neo {
 
-    rgb literals::operator ""_rgb(unsigned long long int c) {
-        return rgb{std::uint32_t(c)};
+    constexpr float srgb::to_linear(std::uint8_t v) {
+        const float f = byte_to_unit(v);
+        return f <= 0.04045f ? f / 12.92f : std::pow((f + 0.055f) / 1.055f, 2.4f);
     }
 
-    rgb::rgb(std::uint8_t r_, std::uint8_t g_, std::uint8_t b_) : r{r_}, g{g_}, b{b_} {}
-
-    rgb::rgb(std::uint32_t rgb_) : rgb{
-                                           std::uint8_t(0xff & (rgb_ >> 16)),
-                                           std::uint8_t(0xff & (rgb_ >> 8)),
-                                           std::uint8_t(0xff & rgb_)} {}
-
-
-    hsv::hsv(float h_, float s_, float v_) : h{h_}, s{s_}, v{v_} {}
-
-    template <class T>
-    maybe_update<T>::maybe_update(keep_t) : update{false}, value{} {}
-
-    template <class T>
-    maybe_update<T>::maybe_update(T value_) : update{true}, value{value_} {}
-
-    template <class T>
-    void maybe_update<T>::set(T &target) const {
-        if (update) {
-            target = value;
-        }
+    constexpr std::uint8_t srgb::from_linear(float v) {
+        v = v <= 0.0031308f ? v * 12.92f : 1.055f * std::pow(v, 1.f / 2.4f) - 0.055f;
+        return unit_to_byte(v);
     }
 
-    template <class T>
-    template <class U>
-    void maybe_update<T>::add(U &target) const {
-        if (update) {
-            if constexpr (not std::is_signed_v<U> and std::is_signed_v<T>) {
-                target = U(std::clamp(T(target + value),
-                                      T(std::numeric_limits<U>::lowest()),
-                                      T(std::numeric_limits<U>::max())));
+    constexpr std::array<float, 3> srgb::to_linear(srgb const &rgb) {
+        return {to_linear(rgb.r), to_linear(rgb.g), to_linear(rgb.b)};
+    }
+
+    constexpr srgb srgb::from_linear(std::array<float, 3> const &linear_rgb) {
+        return {from_linear(linear_rgb[0]), from_linear(linear_rgb[1]), from_linear(linear_rgb[2])};
+    }
+
+    constexpr srgb_gamma_channel_extractor::srgb_gamma_channel_extractor(float gamma) : lut{} {
+        for (std::uint16_t val = 0x00; val <= 0xff; ++val) {
+            if (gamma == 1.f) {
+                lut[val] = unit_to_byte(srgb::to_linear(std::uint8_t(val)));
             } else {
-                target += value;
+                lut[val] = unit_to_byte(std::pow(srgb::to_linear(std::uint8_t(val)), gamma));
             }
         }
     }
 
-    rgb &rgb::shift(rgb delta, bool negate) {
-        return negate ? shift(-delta.r, -delta.g, -delta.b) : shift(delta.r, delta.g, delta.b);
+    constexpr std::uint8_t srgb_gamma_channel_extractor::operator()(srgb col, channel chn) const {
+        return lut[col[chn]];
     }
 
-    hsv &hsv::shift(hsv delta, bool negate) {
-        return negate ? shift(-delta.h, -delta.s, -delta.v) : shift(delta.h, delta.s, delta.v);
+    constexpr srgb literals::operator""_rgb(unsigned long long int c) {
+        return srgb{std::uint32_t(c)};
     }
 
-    rgb rgb::update(maybe_update<std::uint8_t> r_, maybe_update<std::uint8_t> g_, maybe_update<std::uint8_t> b_) const {
-        rgb retval = *this;
-        retval.update(r_, g_, b_);
-        return retval;
+    constexpr srgb::srgb(std::uint8_t r_, std::uint8_t g_, std::uint8_t b_)
+        : r{r_}, g{g_}, b{b_} {}
+
+    constexpr srgb::srgb(std::uint32_t rgb_)
+        : r{std::uint8_t(0xff & (rgb_ >> 16))},
+          g{std::uint8_t(0xff & (rgb_ >> 8))},
+          b{std::uint8_t(0xff & rgb_)} {}
+
+    constexpr std::uint8_t srgb::operator[](channel c) const {
+        switch (c) {
+            case channel::r:
+                return r;
+            case channel::g:
+                return g;
+            case channel::b:
+                return b;
+        }
+        return 0;
     }
 
-    rgb rgb::shift(maybe_update<signed> dr, maybe_update<signed> dg, maybe_update<signed> db) const {
-        rgb retval = *this;
-        retval.shift(dr, dg, db);
-        return retval;
-    }
-
-    rgb rgb::shift(rgb delta, bool negate) const {
-        rgb retval = *this;
-        retval.shift(delta, negate);
-        return retval;
-    }
-
-    hsv hsv::update(maybe_update<float> h_, maybe_update<float> s_, maybe_update<float> v_) const {
-        hsv retval = *this;
-        retval.update(h_, s_, v_);
-        return retval;
-    }
-
-    hsv hsv::shift(maybe_update<float> dh, maybe_update<float> ds, maybe_update<float> dv) const {
-        hsv retval = *this;
-        retval.shift(dh, ds, dv);
-        return retval;
-    }
-
-    hsv hsv::shift(hsv delta, bool negate) const {
-        hsv retval = *this;
-        retval.shift(delta, negate);
-        return retval;
-    }
-
-    rgb rgb::blend(rgb target, float factor) const {
-        rgb retval = *this;
-        retval.blend(target, factor);
-        return retval;
-    }
+    constexpr hsv::hsv(float h_, float s_, float v_) : h{h_}, s{s_}, v{v_} {}
 
 }// namespace neo
-
-namespace mlab {
-    bin_data &operator<<(bin_data &o, neo::rgb c);
-    bin_stream &operator>>(bin_stream &i, neo::rgb &c);
-}// namespace mlab
 
 #endif//NEO_COLOR_HPP
