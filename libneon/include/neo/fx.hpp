@@ -23,6 +23,9 @@ namespace neo {
 
         [[nodiscard]] std::function<void(alarm &)> make_callback(led_encoder &encoder, std::size_t num_leds);
 
+        template <class Extractor>
+        [[nodiscard]] std::function<void(alarm &)> make_callback(led_encoder &encoder, std::size_t num_leds, Extractor extractor);
+
         virtual ~fx_base() = default;
     };
 
@@ -155,6 +158,14 @@ namespace neo {
     template <fx_or_fx_ptr Fx>
     void transition_fx::transition_to(alarm const &a, Fx fx, std::chrono::milliseconds duration) {
         transition_to(a, neo::wrap(std::move(fx)), duration);
+    }
+
+    template <class Extractor>
+    std::function<void(alarm &)> fx_base::make_callback(led_encoder &encoder, std::size_t num_leds, Extractor extractor) {
+        return [fx = shared_from_this(), buffer = std::vector<neo::srgb>{num_leds}, enc = &encoder, extractor = extractor](neo::alarm &a) mutable {
+            fx->populate(a, buffer);
+            ESP_ERROR_CHECK(enc->transmit(std::begin(buffer), std::end(buffer), extractor));
+        };
     }
 }// namespace neo
 
