@@ -1,7 +1,7 @@
 {
   "name": "libNeon",
   "version": "1.0.1",
-  "description": "Neopixel driver library, effects included. No dependencies.",
+  "description": "Neopixel driver library using RMT, effects included. No dependencies.",
   "license": "LGPL-3.0-only",
   "keywords": [
     "neopixel",
@@ -16,7 +16,7 @@
     "cxx20",
     "esp-idf"
   ],
-  "homepage": "https://5p4k.mittelab.dev/libneon",
+  "homepage": "https://git.mittelab.org/5p4k/libneon",
   "repository": {
     "type": "git",
     "url": "https://git.mittelab.org/5p4k/libneon.git"

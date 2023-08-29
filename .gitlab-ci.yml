@@ -84,6 +84,8 @@ publish library:
   stage: deploy
   before_script:
     - python3 -m pip install --user gitpython
+    # Make sure the README is there, so it can be picked up
+    - cp README.md LICENSE ${PIO_LIB_FOLDER}/
   script:
     - |
       python3 cicd/check_version.py ${PIO_LIB_FOLDER}/library.json && \
