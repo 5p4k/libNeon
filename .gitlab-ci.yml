@@ -59,14 +59,10 @@ build examples:
   script:
     - >
       for file in ${PIO_LIB_FOLDER}/examples/*.cpp; do
-        BUILD_DIR="$(mktemp -d)"
         pio ci \
-          --build-dir="${BUILD_DIR}" \
           --project-conf=cicd/platformio.ini \
           --lib=${PIO_LIB_FOLDER} \
-          --keep-build-dir \
           $file
-        rm -rf "${BUILD_DIR}"
       done
   rules:
     # [skip examples] tag for skipping
@@ -87,6 +83,7 @@ publish library:
     # Make sure the README is there, so it can be picked up
     - cp README.md LICENSE ${PIO_LIB_FOLDER}/
   script:
+    - git config --global --add safe.directory $(pwd)
     - |
       python3 cicd/check_version.py ${PIO_LIB_FOLDER}/library.json && \
       pio package publish --owner ${PLATFORMIO_ORG} --non-interactive ${PIO_LIB_FOLDER}
