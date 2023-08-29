@@ -8,7 +8,8 @@ Mirror repo: https://github.com/LizardM4/libNeon
 Public issues: https://github.com/LizardM4/libNeon/issues
 
 ## Tell me how to use it quickly
-Look at the examples, they should make everything clear. Customizing the code should be pretty easy too.
+Look at the examples in the `libneon/examples` folder (or on the Platformio Registry),
+they should make everything clear. Customizing the code should be pretty easy too.
 
 
 Unfortunately there is still no documentation and no unit testing for the library (although I've used it extensively),
@@ -178,11 +179,13 @@ vTaskSuspend(nullptr); // <- very important!
 ```
 
 **Important**: in the `void app_main()` function, *after* the timer is started, you call `vTaskSuspend(nullptr)`.
-This function is a [FreeRTOS](https://www.freertos.org/a00130.html) method that suspends the current task. If you do not
+This function is a [FreeRTOS method](https://www.freertos.org/a00130.html) that suspends the current task. If you do not
 do so, the function will exit, the alarm destroyed, and see no effect. You can also call something like
 `std::this_thread::sleep_for(100s)`.
 
 ## Pre-crafted effects
+
+### Introduction to effects
 
 Some basic effects are ready to use, namely:
  - `neo::solix_fx` solid color (used only for blending)
@@ -219,6 +222,45 @@ If you need to set a different extractor, you can pass it as a last argument to 
 **Important:** `make_callback` uses the method `shared_from_this()` of `std::enable_shared_from_this`. This means you
 **must** wrap the effect into a `std::shared_ptr` **before** calling `make_callback`, otherwise you will trigger a
 segmentation fault.
+
+### How do I combine effects?
+
+Please see `libneon/example/composite_fx.cpp`. The example instantiates the following effects:
+1. spinning rainbow from the `gradient_fx` example
+2. black and white spinner from the `spinner_fx` example (also a `gradient_fx`)
+3. a pulse effect between solid red and solid yellow (see `pulse_fx` example)
+4. a pulse effect between solid blue and solid black (see `pulse_fx` example)
+5. a transition effect which every 10 seconds switches to one of the effects 1..4 (the transition itself lasts 2s)
+6. a mask effect which blends 25% of black on top of the transition effect, to slightly darken then overall output.
+
+The latter mask effects makes e.g. the spinner look a bit blocky (because the LEDs can only display few colors at very
+low brightness) but it was to show how a complex hierarchy can be built out of these base blocks.
+
+The final callback used in the alarm is the one built from the mask effect, thus creating the following dependency
+graph:
+
+```text
+                                    solid_fx         solid_fx        solid_fx         solid_fx
+                                      red             yellow           blue             black
+                                       |                |               |                |
+gradient_fx        gradient_fx         +->  pulse_fx  <-+               +->  pulse_fx  <-+
+  rainbow            spinner               red-yellow                       blue-black
+     |                  |                       |                                |
+     +------------------+-->  transition_fx  <--+--------------------------------+        solid_fx
+                                   |                                                       black
+                                   |                                                         |
+                                   +-----------------------> mask_fx <-----------------------+
+                                                                |
+                                                                v
+                                                              alarm
+```
+
+Since these are all `std::shared_ptr`, the graph is really implied only by the references that are still alive in memory
+with reference count > 0. In particular, `neo::transition_fx`, does not really need to know which effects it will switch
+between in its lifetime. In fact, `neo::transition_fx` only keeps a reference to the effects that are still live, or
+being transitioned from. In the specific example, where a transition of 2s is triggered every 10s, at most two effects 
+will ever be retained by the transition (however, it's perfectly fine to call `neo::transition_fx::transition_to` before
+the previous transitions have completed). 
 
 ### Some technical details
 All effects inherit from `neo::fx_base`, and need to implement only one function:
