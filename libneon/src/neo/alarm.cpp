@@ -74,6 +74,10 @@ namespace neo {
         }
     }
 
+    void alarm::set_priority(UBaseType_t priority) {
+        vTaskPrioritySet(_cbk_task, priority);
+    }
+
     void alarm::create_task(BaseType_t affinity) {
         assert(not is_active());
         assert(_cbk_task == nullptr);

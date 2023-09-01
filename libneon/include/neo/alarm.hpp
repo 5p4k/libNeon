@@ -63,6 +63,8 @@ namespace neo {
 
         void set_period(std::chrono::milliseconds p);
 
+        void set_priority(UBaseType_t priority);
+
         [[nodiscard]] std::chrono::milliseconds alarm_elapsed() const;
 
         ~alarm();
